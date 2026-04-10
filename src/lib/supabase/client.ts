@@ -1,0 +1,1 @@
+// Browser-side Supabase client
