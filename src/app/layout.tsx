@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import "./globals.css";
+import Topbar from "@/components/topbar";
 
 export const metadata: Metadata = {
   title: "Weekly Planner",
@@ -16,7 +17,10 @@ export default function RootLayout({
       lang="en"
       className={`h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+          <Topbar />
+          {children}
+        </body>
     </html>
   );
 }
