@@ -1,7 +1,55 @@
-export default function DashboardPage() {
+import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
+import type { Task } from "@/generated/prisma/client";
+import { redirect } from "next/navigation";
+import WeekView from "./WeekView";
+
+function getWeekStart(dateStr?: string): Date {
+  const base = dateStr ? new Date(dateStr) : new Date();
+  const day = base.getUTCDay(); // 0 = Sunday
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(base);
+  monday.setUTCDate(base.getUTCDate() + diffToMonday);
+  monday.setUTCHours(0, 0, 0, 0);
+  return monday;
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ week?: string }>;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { week } = await searchParams;
+  const monday = getWeekStart(week);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  const tasks = await prisma.task.findMany({
+    where: {
+      userId: user.id,
+      date: { gte: monday, lte: sunday },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
   return (
-    <main className="p-8">
-      <h2 className="text-2xl font-semibold text-gray-900">Dashboard</h2>
+    <main className="flex-1 bg-gray-50 px-6 py-8">
+      <WeekView
+        tasks={(tasks as Task[]).map((t) => ({
+          ...t,
+          date: t.date.toISOString(),
+          createdAt: t.createdAt.toISOString(),
+        }))}
+        weekStart={monday.toISOString()}
+      />
     </main>
   );
 }
