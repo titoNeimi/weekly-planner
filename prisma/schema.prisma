@@ -14,11 +14,27 @@ datasource db {
 
 model Task {
   id        String   @id @default(cuid())
-  title     String
-  category  String
-  notes     String?
+  title      String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  notes      String?
   done      Boolean  @default(false)
   date      DateTime
   userId    String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id String @id @default(cuid())
+  name String
+  membersIDs String[] 
+}
+
+model Category {
+  id     String @id @default(cuid())
+  name   String
+  color  String
+  userId String
+  tasks  Task[]
 }

@@ -1,32 +1,42 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { SerializedTask } from "./WeekView";
+import type { SerializedTask, SerializedCategory } from "./WeekView";
+import { CATEGORY_COLORS, SWATCH_CLASSES } from "@/lib/category-colors";
+import type { CategoryColor } from "@/lib/category-colors";
 
-const CATEGORIES = ["General", "Work", "Personal", "Health", "Learning"];
+const NEW_CATEGORY_VALUE = "__new__";
 
 export default function AddTaskModal({
   defaultDate,
   onClose,
   onSaved,
+  categories,
+  onCategoryCreated,
 }: {
   defaultDate: Date;
   onClose: () => void;
   onSaved: (task: SerializedTask) => void;
+  categories: SerializedCategory[];
+  onCategoryCreated: (category: SerializedCategory) => void;
 }) {
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("General");
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [notes, setNotes] = useState("");
   const [date, setDate] = useState(defaultDate.toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
+
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newColor, setNewColor] = useState<CategoryColor>(CATEGORY_COLORS[0]);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Close on backdrop click
   function handleBackdrop(e: React.MouseEvent) {
     if (e.target === e.currentTarget) onClose();
   }
 
-  // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -35,18 +45,47 @@ export default function AddTaskModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  function handleCategorySelect(value: string) {
+    if (value === NEW_CATEGORY_VALUE) {
+      setShowCreateForm(true);
+    } else {
+      setCategoryId(value);
+      setShowCreateForm(false);
+    }
+  }
+
+  async function handleCreateCategory() {
+    if (!newName.trim()) return;
+    setCreatingCategory(true);
+    const res = await fetch("/api/category", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName.trim(), color: newColor }),
+    });
+    const category: SerializedCategory = await res.json();
+    setCreatingCategory(false);
+    onCategoryCreated(category);
+    setCategoryId(category.id);
+    setShowCreateForm(false);
+    setNewName("");
+    setNewColor(CATEGORY_COLORS[0]);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
     setSaving(true);
-
     const res = await fetch("/api/task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: title.trim(), category, notes: notes.trim() || null, date }),
+      body: JSON.stringify({
+        title: title.trim(),
+        categoryId,
+        notes: notes.trim() || null,
+        date,
+      }),
     });
     const task: SerializedTask = await res.json();
-
     setSaving(false);
     onSaved(task);
     onClose();
@@ -87,15 +126,20 @@ export default function AddTaskModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600">Category</label>
+              <label className="text-xs font-medium text-gray-600">
+                Category
+              </label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={showCreateForm ? NEW_CATEGORY_VALUE : categoryId}
+                onChange={(e) => handleCategorySelect(e.target.value)}
                 className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300 bg-white"
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c}>{c}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
+                <option value={NEW_CATEGORY_VALUE}>+ New category…</option>
               </select>
             </div>
 
@@ -109,6 +153,51 @@ export default function AddTaskModal({
               />
             </div>
           </div>
+
+          {showCreateForm && (
+            <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3">
+              <p className="text-xs font-medium text-gray-700">New category</p>
+              <input
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Category name"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300"
+              />
+              <div className="flex flex-wrap gap-2">
+                {CATEGORY_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setNewColor(color)}
+                    className={`h-6 w-6 rounded-full transition ${SWATCH_CLASSES[color]} ${
+                      newColor === color
+                        ? "ring-2 ring-offset-1 ring-gray-600"
+                        : ""
+                    }`}
+                    aria-label={color}
+                  />
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="rounded-lg px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!newName.trim() || creatingCategory}
+                  onClick={handleCreateCategory}
+                  className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition"
+                >
+                  {creatingCategory ? "Creating…" : "Create"}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-gray-600">Notes</label>
@@ -131,7 +220,7 @@ export default function AddTaskModal({
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || showCreateForm}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition"
             >
               {saving ? "Saving…" : "Add task"}

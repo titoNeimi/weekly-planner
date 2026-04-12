@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import type { Task } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
 import WeekView from "./WeekView";
 
@@ -37,16 +36,18 @@ export default async function DashboardPage({
       userId: user.id,
       date: { gte: monday, lte: sunday },
     },
+    include: { category: { select: { id: true, name: true, color: true } } },
     orderBy: { createdAt: "asc" },
   });
 
   return (
     <main className="flex-1 bg-gray-50 px-6 py-8">
       <WeekView
-        tasks={(tasks as Task[]).map((t) => ({
+        tasks={tasks.map((t) => ({
           ...t,
           date: t.date.toISOString(),
           createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
         }))}
         weekStart={monday.toISOString()}
       />

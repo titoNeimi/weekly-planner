@@ -1,24 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DayColumn from "./DayColumn";
+import {
+  CATEGORY_COLORS,
+  COLOR_CLASSES,
+  SWATCH_CLASSES,
+} from "@/lib/category-colors";
+import type { CategoryColor } from "@/lib/category-colors";
+
+export type SerializedCategory = {
+  id: string;
+  name: string;
+  color: string;
+};
 
 export type SerializedTask = {
   id: string;
   title: string;
-  category: string;
+  categoryId: string;
+  category: SerializedCategory | null;
   notes: string | null;
   done: boolean;
   date: string;
   userId: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function getWeekDays(weekStart: string): Date[] {
@@ -61,6 +85,21 @@ export default function WeekView({
   const [weekStart, setWeekStart] = useState(initialWeekStart);
   const [tasks, setTasks] = useState(initialTasks);
   const [fetching, setFetching] = useState(false);
+  const [categories, setCategories] = useState<SerializedCategory[]>([]);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryColor, setNewCategoryColor] = useState<CategoryColor>(
+    CATEGORY_COLORS[0],
+  );
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const categoryNameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/category")
+      .then((r) => r.json())
+      .then(setCategories);
+  }, []);
 
   const days = getWeekDays(weekStart);
   const monday = days[0];
@@ -107,6 +146,33 @@ export default function WeekView({
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
+  function handleCategoryCreated(category: SerializedCategory) {
+    setCategories((prev) => [...prev, category]);
+  }
+
+  async function handleCreateCategory() {
+    if (!newCategoryName.trim()) return;
+    setCreatingCategory(true);
+    const res = await fetch("/api/category", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: newCategoryName.trim(),
+        color: newCategoryColor,
+      }),
+    });
+    const category: SerializedCategory = await res.json();
+    setCreatingCategory(false);
+    handleCategoryCreated(category);
+    setShowCategoryForm(false);
+    setNewCategoryName("");
+    setNewCategoryColor(CATEGORY_COLORS[0]);
+  }
+
+  const visibleTasks = activeCategoryId
+    ? tasks.filter((t) => t.categoryId === activeCategoryId)
+    : tasks;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -139,10 +205,99 @@ export default function WeekView({
         </div>
       </div>
 
-      <div className={`grid grid-cols-7 gap-3 transition-opacity ${fetching ? "opacity-50" : "opacity-100"}`}>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {categories.length > 0 && (
+            <button
+              onClick={() => setActiveCategoryId(null)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                activeCategoryId === null
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              All
+            </button>
+          )}
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() =>
+                setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)
+              }
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                activeCategoryId === cat.id
+                  ? (COLOR_CLASSES[cat.color as CategoryColor] ??
+                    "bg-gray-100 text-gray-600")
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+          <button
+            onClick={() => {
+              setShowCategoryForm((v) => !v);
+              setTimeout(() => categoryNameRef.current?.focus(), 0);
+            }}
+            className="rounded-full border border-dashed border-gray-300 px-3 py-1 text-xs text-gray-400 hover:border-gray-400 hover:text-gray-600 transition"
+          >
+            + Category
+          </button>
+        </div>
+
+        {showCategoryForm && (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <input
+              ref={categoryNameRef}
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCreateCategory()}
+              placeholder="Category name"
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+            />
+            <div className="flex gap-1.5">
+              {CATEGORY_COLORS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => setNewCategoryColor(color)}
+                  className={`h-5 w-5 rounded-full transition ${SWATCH_CLASSES[color]} ${
+                    newCategoryColor === color
+                      ? "ring-2 ring-offset-1 ring-gray-500"
+                      : ""
+                  }`}
+                  aria-label={color}
+                />
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowCategoryForm(false);
+                  setNewCategoryName("");
+                }}
+                className="rounded-lg px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!newCategoryName.trim() || creatingCategory}
+                onClick={handleCreateCategory}
+                className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition"
+              >
+                {creatingCategory ? "Creating…" : "Create"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div
+        className={`grid grid-cols-7 gap-3 transition-opacity ${fetching ? "opacity-50" : "opacity-100"}`}
+      >
         {days.map((date, i) => {
-          const dayTasks = tasks.filter(
-            (t) => t.date.slice(0, 10) === date.toISOString().slice(0, 10)
+          const dayTasks = visibleTasks.filter(
+            (t) => t.date.slice(0, 10) === date.toISOString().slice(0, 10),
           );
           return (
             <DayColumn
@@ -150,9 +305,11 @@ export default function WeekView({
               label={DAY_LABELS[i]}
               date={date}
               tasks={dayTasks}
+              categories={categories}
               onTaskCreated={handleTaskCreated}
               onTaskToggled={handleTaskToggled}
               onTaskDeleted={handleTaskDeleted}
+              onCategoryCreated={handleCategoryCreated}
             />
           );
         })}
