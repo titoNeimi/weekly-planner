@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { SerializedTask, SerializedCategory } from "./WeekView";
 import { CATEGORY_COLORS, SWATCH_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
+import CategorySelect, { NEW_OPTION } from "@/components/category-select";
 
-const NEW_CATEGORY_VALUE = "__new__";
+const NEW_CATEGORY_VALUE = NEW_OPTION;
 
 export default function AddTaskModal({
   defaultDate,
@@ -21,9 +22,10 @@ export default function AddTaskModal({
   onCategoryCreated: (category: SerializedCategory) => void;
 }) {
   const [title, setTitle] = useState("");
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "none");
   const [notes, setNotes] = useState("");
   const [date, setDate] = useState(defaultDate.toISOString().slice(0, 10));
+  const [time, setTime] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -54,6 +56,11 @@ export default function AddTaskModal({
     }
   }
 
+  function resolvedCategoryId(): string | null {
+    if (categoryId === "none" || categoryId === "") return null;
+    return categoryId;
+  }
+
   async function handleCreateCategory() {
     if (!newName.trim()) return;
     setCreatingCategory(true);
@@ -71,7 +78,7 @@ export default function AddTaskModal({
     setNewColor(CATEGORY_COLORS[0]);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!title.trim()) return;
     setSaving(true);
@@ -80,9 +87,10 @@ export default function AddTaskModal({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: title.trim(),
-        categoryId,
+        categoryId: resolvedCategoryId(),
         notes: notes.trim() || null,
         date,
+        time: time || null,
       }),
     });
     const task: SerializedTask = await res.json();
@@ -129,18 +137,12 @@ export default function AddTaskModal({
               <label className="text-xs font-medium text-gray-600">
                 Category
               </label>
-              <select
+              <CategorySelect
                 value={showCreateForm ? NEW_CATEGORY_VALUE : categoryId}
-                onChange={(e) => handleCategorySelect(e.target.value)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300 bg-white"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-                <option value={NEW_CATEGORY_VALUE}>+ New category…</option>
-              </select>
+                onChange={handleCategorySelect}
+                categories={categories}
+                showNewOption
+              />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -152,6 +154,18 @@ export default function AddTaskModal({
                 className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300"
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-600">
+              Time <span className="font-normal text-gray-400">(optional)</span>
+            </label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300"
+            />
           </div>
 
           {showCreateForm && (

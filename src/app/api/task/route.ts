@@ -36,18 +36,18 @@ export async function POST(request: NextRequest) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { title, categoryId, notes, date } = body;
+  const { title, categoryId, notes, date, time } = body;
 
-  if (!title?.trim() || !date || !categoryId) {
+  if (!title?.trim() || !date) {
     return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   const task = await prisma.task.create({
     data: {
       title: title.trim(),
-      categoryId,
+      categoryId: categoryId || null,
       notes: notes?.trim() || null,
-      date: new Date(date + "T00:00:00.000Z"),
+      date: new Date(`${date}T${time ?? "00:00"}:00.000Z`),
       userId: user.id,
     },
     include: { category: { select: { id: true, name: true, color: true } } },

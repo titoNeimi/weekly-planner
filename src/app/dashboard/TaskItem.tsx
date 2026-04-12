@@ -1,18 +1,29 @@
 "use client";
 
-import type { SerializedTask } from "./WeekView";
+import { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import type { SerializedTask, SerializedCategory } from "./WeekView";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
+import EditTaskModal from "./EditTaskModal";
+import TaskDetailModal from "./TaskDetailModal";
 
 export default function TaskItem({
   task,
+  categories,
   onToggled,
+  onUpdated,
   onDeleted,
 }: {
   task: SerializedTask;
+  categories: SerializedCategory[];
   onToggled: (id: string, done: boolean) => void;
+  onUpdated: (task: SerializedTask) => void;
   onDeleted: (id: string) => void;
 }) {
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+
   async function handleToggle() {
     const newDone = !task.done;
     onToggled(task.id, newDone);
@@ -35,7 +46,8 @@ export default function TaskItem({
 
   return (
     <div
-      className={`group rounded-lg border px-3 py-2 transition ${
+      onClick={() => setDetailOpen(true)}
+      className={`group cursor-pointer rounded-lg border px-3 py-2 transition ${
         task.done
           ? "border-gray-100 bg-gray-50"
           : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
@@ -43,7 +55,10 @@ export default function TaskItem({
     >
       <div className="flex items-start gap-2">
         <button
-          onClick={handleToggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggle();
+          }}
           aria-label={task.done ? "Mark incomplete" : "Mark complete"}
           className={`mt-0.5 h-4 w-4 shrink-0 rounded border transition ${
             task.done
@@ -76,14 +91,49 @@ export default function TaskItem({
             </span>
           )}
         </div>
-        <button
-          onClick={handleDelete}
-          aria-label="Delete task"
-          className="invisible shrink-0 text-gray-300 hover:text-red-400 group-hover:visible text-sm leading-none"
-        >
-          ×
-        </button>
+        <div className="invisible flex shrink-0 items-center gap-1 group-hover:visible">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditOpen(true);
+            }}
+            aria-label="Edit task"
+            className="text-gray-300 hover:text-gray-500 transition"
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
+            aria-label="Delete task"
+            className="text-gray-300 hover:text-red-400 transition"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
       </div>
+
+      {detailOpen && (
+        <TaskDetailModal
+          task={task}
+          onClose={() => setDetailOpen(false)}
+          onEdit={() => {
+            setDetailOpen(false);
+            setEditOpen(true);
+          }}
+        />
+      )}
+
+      {editOpen && (
+        <EditTaskModal
+          task={task}
+          categories={categories}
+          onClose={() => setEditOpen(false)}
+          onSaved={onUpdated}
+        />
+      )}
     </div>
   );
 }

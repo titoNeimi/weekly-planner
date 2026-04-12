@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const supabase = await createClient();
   const {
@@ -12,19 +12,29 @@ export async function PATCH(
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { done } = await request.json();
+  const { done, title, categoryId, notes, date, time } = await request.json();
 
-  await prisma.task.updateMany({
+  const data: Record<string, unknown> = {};
+  if (done !== undefined) data.done = done;
+  if (title !== undefined) data.title = title.trim();
+  if (categoryId !== undefined) data.categoryId = categoryId ?? null;
+  if (notes !== undefined) data.notes = notes?.trim() || null;
+  if (date !== undefined)
+    data.date = new Date(`${date}T${time ?? "00:00"}:00.000Z`);
+
+  await prisma.task.updateMany({ where: { id, userId: user.id }, data });
+
+  const task = await prisma.task.findFirst({
     where: { id, userId: user.id },
-    data: { done },
+    include: { category: { select: { id: true, name: true, color: true } } },
   });
 
-  return new Response(null, { status: 204 });
+  return Response.json(task);
 }
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const supabase = await createClient();
   const {
