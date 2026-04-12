@@ -31,14 +31,19 @@ export default async function DashboardPage({
   sunday.setDate(monday.getDate() + 6);
   sunday.setHours(23, 59, 59, 999);
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      userId: user.id,
-      date: { gte: monday, lte: sunday },
-    },
-    include: { category: { select: { id: true, name: true, color: true } } },
-    orderBy: { createdAt: "asc" },
-  });
+  const [tasks, categories] = await Promise.all([
+    prisma.task.findMany({
+      where: {
+        userId: user.id,
+        date: { gte: monday, lte: sunday },
+      },
+      include: { category: { select: { id: true, name: true, color: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.category.findMany({
+      where: { userId: user.id },
+    }),
+  ]);
 
   return (
     <main className="flex-1 bg-gray-50 px-6 py-8">
@@ -49,6 +54,7 @@ export default async function DashboardPage({
           createdAt: t.createdAt.toISOString(),
           updatedAt: t.updatedAt.toISOString(),
         }))}
+        categories={categories}
         weekStart={monday.toISOString()}
       />
     </main>

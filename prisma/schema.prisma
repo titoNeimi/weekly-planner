@@ -15,8 +15,8 @@ datasource db {
 model Task {
   id        String   @id @default(cuid())
   title      String
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
   notes      String?
   done      Boolean  @default(false)
   date      DateTime
