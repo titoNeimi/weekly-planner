@@ -12,6 +12,7 @@ export default function DayColumn({
   categories,
   onTaskCreated,
   onTaskToggled,
+  onTaskUpdated,
   onTaskDeleted,
   onCategoryCreated,
 }: {
@@ -21,6 +22,7 @@ export default function DayColumn({
   categories: SerializedCategory[];
   onTaskCreated: (task: SerializedTask) => void;
   onTaskToggled: (id: string, done: boolean) => void;
+  onTaskUpdated: (task: SerializedTask) => void;
   onTaskDeleted: (id: string) => void;
   onCategoryCreated: (category: SerializedCategory) => void;
 }) {
@@ -61,7 +63,9 @@ export default function DayColumn({
             <TaskItem
               key={task.id}
               task={task}
+              categories={categories}
               onToggled={onTaskToggled}
+              onUpdated={onTaskUpdated}
               onDeleted={onTaskDeleted}
             />
           ))}
