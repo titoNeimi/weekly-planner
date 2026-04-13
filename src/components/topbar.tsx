@@ -18,7 +18,7 @@ export default async function Topbar() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
         <Link
           href={user ? "/dashboard" : "/"}
           className="font-semibold text-gray-900 hover:text-gray-600 transition"
@@ -27,14 +27,14 @@ export default async function Topbar() {
         </Link>
 
         {user ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
               <Avatar
                 avatarUrl={user.user_metadata.avatar_url}
                 name={user.user_metadata.full_name}
                 email={user.email}
               />
-              <span className="text-sm text-gray-600">
+              <span className="hidden sm:inline text-sm text-gray-600">
                 {user.user_metadata.full_name ?? user.email}
               </span>
             </div>

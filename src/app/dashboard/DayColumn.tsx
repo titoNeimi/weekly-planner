@@ -33,7 +33,7 @@ export default function DayColumn({
   return (
     <>
       <div
-        className={`flex h-full flex-col gap-3 rounded-xl border p-4 ${
+        className={`flex h-full flex-col gap-3 rounded-xl border p-3 sm:p-4 ${
           isToday
             ? "border-gray-900 bg-white shadow-sm"
             : "border-gray-200 bg-white"

@@ -46,7 +46,7 @@ export default async function DashboardPage({
   ]);
 
   return (
-    <main className="flex-1 bg-gray-50 px-6 py-8">
+    <main className="flex-1 bg-gray-50 px-3 py-4 sm:px-6 sm:py-8">
       <WeekView
         tasks={tasks.map((t) => ({
           ...t,

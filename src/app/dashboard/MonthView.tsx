@@ -24,6 +24,7 @@ const MONTH_NAMES = [
   "December",
 ];
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_LABELS_SHORT = ["M", "T", "W", "T", "F", "S", "S"];
 
 function getCurrentMonthStart(): Date {
   const now = new Date();
@@ -149,12 +150,13 @@ export default function MonthView({
       {/* Grid */}
       <div className="grid grid-cols-7 gap-px rounded-xl overflow-hidden border border-gray-200 bg-gray-200">
         {/* Day labels */}
-        {DAY_LABELS.map((d) => (
+        {DAY_LABELS.map((d, i) => (
           <div
             key={d}
             className="bg-gray-50 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-400"
           >
-            {d}
+            <span className="sm:hidden">{DAY_LABELS_SHORT[i]}</span>
+            <span className="hidden sm:inline">{d}</span>
           </div>
         ))}
 
@@ -172,7 +174,7 @@ export default function MonthView({
           return (
             <div
               key={i}
-              className={`group flex min-h-28 flex-col gap-1 p-2 ${
+              className={`group flex min-h-16 sm:min-h-28 flex-col gap-1 p-1 sm:p-2 ${
                 isCurrentMonth ? "bg-white" : "bg-gray-50"
               }`}
             >
