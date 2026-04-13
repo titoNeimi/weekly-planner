@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_ROUTES = ["/", "/login", "/api/auth/callback"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
   const { pathname } = request.nextUrl;
 
