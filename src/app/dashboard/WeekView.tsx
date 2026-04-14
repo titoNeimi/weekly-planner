@@ -146,6 +146,11 @@ export default function WeekView({
   async function goToday() {
     const today = getCurrentWeekStart();
     setWeekStart(today);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const idx = getWeekDays(today).findIndex(
+      (d) => d.toISOString().slice(0, 10) === todayStr,
+    );
+    setActiveDayIndex(idx >= 0 ? idx : 0);
     await fetchWeek(today);
   }
 
@@ -376,7 +381,7 @@ export default function WeekView({
 
       {view === "week" ? (
         <>
-          {/* Mobile: single-day view */}
+          {/* Mobile: single-day view (< sm) */}
           <div className={`sm:hidden transition-opacity ${fetching ? "opacity-50" : ""}`}>
             <div className="mb-3 flex items-center justify-between">
               <button
@@ -417,9 +422,63 @@ export default function WeekView({
             />
           </div>
 
-          {/* Desktop: 7-column grid */}
+          {/* Medium: 3-column view (sm – 2xl) */}
+          {(() => {
+            const chunkStart = Math.floor(activeDayIndex / 3) * 3;
+            const chunkDays = days.slice(chunkStart, chunkStart + 3);
+            const chunkLabel =
+              chunkDays.length === 1
+                ? `${DAY_LABELS_LONG[chunkStart]} ${chunkDays[0].getUTCDate()}`
+                : `${DAY_LABELS_LONG[chunkStart]} ${chunkDays[0].getUTCDate()} – ${DAY_LABELS_LONG[chunkStart + chunkDays.length - 1]} ${chunkDays[chunkDays.length - 1].getUTCDate()}`;
+            return (
+              <div className={`hidden sm:flex 2xl:hidden flex-col gap-3 transition-opacity ${fetching ? "opacity-50" : ""}`}>
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setActiveDayIndex(Math.max(0, chunkStart - 3))}
+                    disabled={chunkStart === 0}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
+                    aria-label="Previous days"
+                  >
+                    ←
+                  </button>
+                  <span className="text-sm font-medium text-gray-700">{chunkLabel}</span>
+                  <button
+                    onClick={() => setActiveDayIndex(Math.min(6, chunkStart + 3))}
+                    disabled={chunkStart + 3 >= 7}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
+                    aria-label="Next days"
+                  >
+                    →
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {chunkDays.map((date, i) => {
+                    const dayTasks = visibleTasks.filter(
+                      (t) => t.date.slice(0, 10) === date.toISOString().slice(0, 10),
+                    );
+                    return (
+                      <DayColumn
+                        key={chunkStart + i}
+                        label={DAY_LABELS[chunkStart + i]}
+                        date={date}
+                        tasks={dayTasks}
+                        categories={categories}
+                        onTaskCreated={handleTaskCreated}
+                        onTaskToggled={handleTaskToggled}
+                        onTaskUpdated={handleTaskUpdated}
+                        onTaskDeleted={handleTaskDeleted}
+                        onCategoryCreated={handleCategoryCreated}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Desktop: 7-column grid (2xl+) */}
           <div
-            className={`hidden sm:grid grid-cols-7 gap-3 transition-opacity ${fetching ? "opacity-50" : "opacity-100"}`}
+            className={`hidden 2xl:grid grid-cols-7 gap-3 transition-opacity ${fetching ? "opacity-50" : "opacity-100"}`}
           >
             {days.map((date, i) => {
               const dayTasks = visibleTasks.filter(
