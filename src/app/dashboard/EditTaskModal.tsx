@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { SerializedTask, SerializedCategory } from "./WeekView";
 import CategorySelect from "@/components/category-select";
+import { toast } from "sonner";
 
 export default function EditTaskModal({
   task,
@@ -54,6 +55,7 @@ export default function EditTaskModal({
     setSaving(false);
     onSaved(updated);
     onClose();
+    toast.success("Task updated");
   }
 
   return (

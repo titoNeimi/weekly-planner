@@ -10,6 +10,7 @@ import {
 } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
 import CategoryContextMenu from "@/components/category-context-menu";
+import { toast } from "sonner";
 
 export type SerializedCategory = {
   id: string;
@@ -189,6 +190,7 @@ export default function WeekView({
       ),
     );
     if (activeCategoryId === id) setActiveCategoryId(null);
+    toast.success("Category deleted");
   }
 
   async function handleCreateCategory() {
@@ -208,6 +210,7 @@ export default function WeekView({
     setShowCategoryForm(false);
     setNewCategoryName("");
     setNewCategoryColor(CATEGORY_COLORS[0]);
+    toast.success("Category created");
   }
 
   const visibleTasks = activeCategoryId

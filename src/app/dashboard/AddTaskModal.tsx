@@ -5,6 +5,7 @@ import type { SerializedTask, SerializedCategory } from "./WeekView";
 import { CATEGORY_COLORS, SWATCH_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
 import CategorySelect, { NEW_OPTION } from "@/components/category-select";
+import { toast } from "sonner";
 
 const NEW_CATEGORY_VALUE = NEW_OPTION;
 
@@ -76,6 +77,7 @@ export default function AddTaskModal({
     setShowCreateForm(false);
     setNewName("");
     setNewColor(CATEGORY_COLORS[0]);
+    toast.success("Category created");
   }
 
   async function handleSubmit(e: React.SyntheticEvent) {
@@ -97,6 +99,7 @@ export default function AddTaskModal({
     setSaving(false);
     onSaved(task);
     onClose();
+    toast.success("Task added");
   }
 
   return (

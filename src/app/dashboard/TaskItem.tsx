@@ -7,6 +7,7 @@ import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
 import EditTaskModal from "./EditTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
+import { toast } from "sonner";
 
 export default function TaskItem({
   task,
@@ -37,6 +38,7 @@ export default function TaskItem({
   async function handleDelete() {
     onDeleted(task.id);
     await fetch(`/api/task/${task.id}`, { method: "DELETE" });
+    toast.success("Task deleted");
   }
 
   const categoryBadgeClass = task.category

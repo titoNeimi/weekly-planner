@@ -8,6 +8,7 @@ import type { CategoryColor } from "@/lib/category-colors";
 import AddTaskModal from "./AddTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
+import { toast } from "sonner";
 
 const MONTH_NAMES = [
   "January",
@@ -96,6 +97,7 @@ export default function MonthView({
   async function handleDelete(id: string) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
     await fetch(`/api/task/${id}`, { method: "DELETE" });
+    toast.success("Task deleted");
   }
 
   async function navigate(direction: number) {

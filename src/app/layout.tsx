@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import "./globals.css";
 import Topbar from "@/components/topbar";
 import { UserProvider } from "@/context/UserContext";
-
+import { Toaster } from "sonner";
 export const metadata: Metadata = {
   title: "Weekly Planner",
   description: "A simple weekly planner built with Next.js and Tailwind CSS.",
@@ -22,6 +22,7 @@ export default function RootLayout({
         <UserProvider>
           <Topbar />
           {children}
+          <Toaster position="bottom-right" richColors />
         </UserProvider>
       </body>
     </html>

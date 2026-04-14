@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { SerializedCategory } from "@/app/dashboard/WeekView";
+import { toast } from "sonner";
 
 type Props = {
   category: SerializedCategory;
@@ -62,6 +63,7 @@ export default function CategoryContextMenu({
     setSaving(false);
     onRenamed(category.id, trimmed);
     onClose();
+    toast.success("Category renamed");
   }
 
   async function handleDelete() {
