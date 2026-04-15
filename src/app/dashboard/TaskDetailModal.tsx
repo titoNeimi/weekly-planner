@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Check } from "lucide-react";
 import type { SerializedTask } from "./WeekView";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
@@ -10,10 +10,12 @@ export default function TaskDetailModal({
   task,
   onClose,
   onEdit,
+  onToggle,
 }: {
   task: SerializedTask;
   onClose: () => void;
   onEdit: () => void;
+  onToggle: () => void;
 }) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -66,6 +68,17 @@ export default function TaskDetailModal({
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-1">
+            <button
+              onClick={onToggle}
+              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition ${
+                task.done
+                  ? "border-gray-200 text-gray-400 hover:bg-gray-50"
+                  : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+              }`}
+            >
+              <Check size={11} />
+              {task.done ? "Undo" : "Done"}
+            </button>
             <button
               onClick={onEdit}
               className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-600 hover:bg-gray-50 transition"

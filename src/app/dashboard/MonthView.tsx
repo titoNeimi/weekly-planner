@@ -176,7 +176,8 @@ export default function MonthView({
           return (
             <div
               key={i}
-              className={`group flex min-h-16 sm:min-h-28 flex-col gap-1 p-1 sm:p-2 ${
+              onClick={() => setAddDate(date)}
+              className={`group flex min-h-16 sm:min-h-28 cursor-pointer flex-col gap-1 p-1 sm:p-2 ${
                 isCurrentMonth ? "bg-white" : "bg-gray-50"
               }`}
             >
@@ -198,7 +199,10 @@ export default function MonthView({
                 {shownTasks.map((task) => (
                   <div
                     key={task.id}
-                    onClick={() => setDetailTask(task)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDetailTask(task);
+                    }}
                     className={`group/task flex cursor-pointer items-start gap-1 rounded px-1 py-0.5 hover:bg-gray-100 transition ${
                       task.done ? "opacity-40" : ""
                     }`}
@@ -261,7 +265,10 @@ export default function MonthView({
 
               {/* Add task */}
               <button
-                onClick={() => setAddDate(date)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAddDate(date);
+                }}
                 className="mt-auto w-full rounded py-0.5 pl-1 text-left text-xs text-gray-300 opacity-0 hover:text-gray-500 transition group-hover:opacity-100"
               >
                 + add task

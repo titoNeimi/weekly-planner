@@ -125,6 +125,7 @@ export default function TaskItem({
             setDetailOpen(false);
             setEditOpen(true);
           }}
+          onToggle={handleToggle}
         />
       )}
 
