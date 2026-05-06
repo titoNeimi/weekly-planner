@@ -299,6 +299,18 @@ export default function MonthView({
             setEditTask(detailTask);
             setDetailTask(null);
           }}
+          onToggle={async () => {
+            const newDone = !detailTask.done;
+            setDetailTask({ ...detailTask, done: newDone });
+            setTasks((prev) =>
+              prev.map((t) => (t.id === detailTask.id ? { ...t, done: newDone } : t)),
+            );
+            await fetch(`/api/task/${detailTask.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ done: newDone }),
+            });
+          }}
         />
       )}
 

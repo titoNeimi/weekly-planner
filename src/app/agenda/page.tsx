@@ -1,29 +1,44 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import TaskOverview from "./TaskOverview";
+import WeekView from "../dashboard/WeekView";
 
-export default async function DashboardPage() {
+function getWeekStart(dateStr?: string): Date {
+  const base = dateStr ? new Date(dateStr) : new Date();
+  const day = base.getUTCDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(base);
+  monday.setUTCDate(base.getUTCDate() + diffToMonday);
+  monday.setUTCHours(0, 0, 0, 0);
+  return monday;
+}
+
+export default async function AgendaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ week?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  const { week } = await searchParams;
+  const monday = getWeekStart(week);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
 
   const [tasks, categories] = await Promise.all([
     prisma.task.findMany({
       where: {
         userId: user.id,
-        OR: [
-          { date: { gte: today } },
-          { date: { lt: today }, done: false },
-        ],
+        date: { gte: monday, lte: sunday },
       },
       include: { category: { select: { id: true, name: true, color: true } } },
-      orderBy: { date: "asc" },
+      orderBy: { createdAt: "asc" },
     }),
     prisma.category.findMany({
       where: { userId: user.id },
@@ -32,7 +47,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="flex-1 bg-gray-50 px-3 py-4 sm:px-6 sm:py-8">
-      <TaskOverview
+      <WeekView
         tasks={tasks.map((t) => ({
           ...t,
           date: t.date.toISOString(),
@@ -40,6 +55,7 @@ export default async function DashboardPage() {
           updatedAt: t.updatedAt.toISOString(),
         }))}
         categories={categories}
+        weekStart={monday.toISOString()}
       />
     </main>
   );

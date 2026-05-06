@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+  const isDoneParam = searchParams.get("done");
+
+  const isDone = isDoneParam
+    ? isDoneParam.toLocaleLowerCase() === "true"
+    : undefined;
 
   const tasks = await prisma.task.findMany({
     where: {
@@ -20,6 +25,7 @@ export async function GET(request: NextRequest) {
         gte: from ? new Date(from) : undefined,
         lte: to ? new Date(to) : undefined,
       },
+      done: isDone,
     },
     include: { category: { select: { id: true, name: true, color: true } } },
     orderBy: { createdAt: "asc" },

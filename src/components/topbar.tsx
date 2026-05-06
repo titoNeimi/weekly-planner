@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Avatar from "@/components/avatar";
+import NavLinks from "@/components/nav-links";
 
 async function signOut() {
   "use server";
@@ -19,12 +20,15 @@ export default async function Topbar() {
   return (
     <header className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link
-          href={user ? "/dashboard" : "/"}
-          className="font-semibold text-gray-900 hover:text-gray-600 transition"
-        >
-          Weekly Planner
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href={user ? "/dashboard" : "/"}
+            className="font-semibold text-gray-900 hover:text-gray-600 transition"
+          >
+            Weekly Planner
+          </Link>
+          {user && <NavLinks />}
+        </div>
 
         {user ? (
           <div className="flex items-center gap-2 sm:gap-4">
