@@ -53,9 +53,54 @@ enum RecurringType {
 }
 
 model Team {
-  id         String   @id @default(cuid())
-  name       String
-  membersIDs String[]
+  id          String       @id @default(cuid())
+  name        String
+  members     TeamMember[]
+  invitations Invitation[]
+  createdAt   DateTime     @default(now())
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  teamId   String
+  team     Team     @relation(fields: [teamId], references: [id])
+  userId   String
+  profile  Profile  @relation(fields: [userId], references: [userId])
+  role     TeamRole @default(USER)
+  joinedAt DateTime @default(now())
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  USER
+}
+
+model Invitation {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  teamId          String
+  team            Team      @relation(fields: [teamId], references: [id])
+  maxUses         Int       @default(10)
+  uses            Int       @default(0)
+  endDate         DateTime?
+  createdByUserId String
+  createdAt       DateTime  @default(now())
+}
+
+model Profile {
+  userId      String       @id
+  role        AppRole      @default(USER)
+  name        String?
+  avatarUrl   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships TeamMember[]
+}
+
+enum AppRole {
+  ADMIN
+  USER
 }
 
 model Category {
