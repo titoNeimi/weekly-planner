@@ -29,6 +29,15 @@ export default function AddTaskModal({
   const [time, setTime] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringType, setRecurringType] = useState<
+    "DAILY" | "WEEKLY" | "MONTHLY" | "ANNUAL"
+  >("WEEKLY");
+  const [repeatInterval, setRepeatInterval] = useState(1);
+  const [endCondition, setEndCondition] = useState<"date" | "count">("date");
+  const [endDate, setEndDate] = useState("");
+  const [endCount, setEndCount] = useState(4);
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState<CategoryColor>(CATEGORY_COLORS[0]);
@@ -83,23 +92,36 @@ export default function AddTaskModal({
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!title.trim()) return;
+    if (isRecurring && endCondition === "date" && !endDate) return;
     setSaving(true);
+
+    const body: Record<string, unknown> = {
+      title: title.trim(),
+      categoryId: resolvedCategoryId(),
+      notes: notes.trim() || null,
+      date,
+      time: time || null,
+    };
+
+    if (isRecurring) {
+      body.recurringTask = {
+        type: recurringType,
+        interval: repeatInterval,
+        endDate: endCondition === "date" ? endDate : undefined,
+        endCount: endCondition === "count" ? endCount : undefined,
+      };
+    }
+
     const res = await fetch("/api/task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: title.trim(),
-        categoryId: resolvedCategoryId(),
-        notes: notes.trim() || null,
-        date,
-        time: time || null,
-      }),
+      body: JSON.stringify(body),
     });
     const task: SerializedTask = await res.json();
     setSaving(false);
     onSaved(task);
     onClose();
-    toast.success("Task added");
+    toast.success(isRecurring ? "Recurring task created" : "Task added");
   }
 
   return (
@@ -213,6 +235,92 @@ export default function AddTaskModal({
                   {creatingCategory ? "Creating…" : "Create"}
                 </button>
               </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-600">
+              <input
+                type="checkbox"
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              Repeat this task
+            </label>
+          </div>
+
+          {isRecurring && (
+            <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600 shrink-0">Every</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={repeatInterval}
+                  onChange={(e) =>
+                    setRepeatInterval(Math.max(1, Number(e.target.value)))
+                  }
+                  className="w-14 rounded-lg border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300"
+                />
+                <select
+                  value={recurringType}
+                  onChange={(e) =>
+                    setRecurringType(e.target.value as typeof recurringType)
+                  }
+                  className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300"
+                >
+                  <option value="DAILY">day(s)</option>
+                  <option value="WEEKLY">week(s)</option>
+                  <option value="MONTHLY">month(s)</option>
+                  <option value="ANNUAL">year(s)</option>
+                </select>
+              </div>
+
+              <div className="flex gap-4">
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
+                  <input
+                    type="radio"
+                    name="endCondition"
+                    checked={endCondition === "date"}
+                    onChange={() => setEndCondition("date")}
+                  />
+                  Until date
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
+                  <input
+                    type="radio"
+                    name="endCondition"
+                    checked={endCondition === "count"}
+                    onChange={() => setEndCondition("count")}
+                  />
+                  After N times
+                </label>
+              </div>
+
+              {endCondition === "date" ? (
+                <input
+                  type="date"
+                  value={endDate}
+                  min={date}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  required={isRecurring}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300"
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    value={endCount}
+                    onChange={(e) =>
+                      setEndCount(Math.max(1, Number(e.target.value)))
+                    }
+                    className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-300"
+                  />
+                  <span className="text-xs text-gray-500">times</span>
+                </div>
+              )}
             </div>
           )}
 

@@ -14,6 +14,9 @@ export default function DayColumn({
   onTaskToggled,
   onTaskUpdated,
   onTaskDeleted,
+  onTaskReplaced,
+  onSeriesDeleted,
+  onSeriesUpdated,
   onCategoryCreated,
 }: {
   label: string;
@@ -24,6 +27,15 @@ export default function DayColumn({
   onTaskToggled: (id: string, done: boolean) => void;
   onTaskUpdated: (task: SerializedTask) => void;
   onTaskDeleted: (id: string) => void;
+  onTaskReplaced: (oldId: string, task: SerializedTask) => void;
+  onSeriesDeleted: (recurringTaskId: string) => void;
+  onSeriesUpdated: (
+    recurringTaskId: string,
+    changes: Pick<
+      SerializedTask,
+      "title" | "categoryId" | "notes" | "category"
+    >,
+  ) => void;
   onCategoryCreated: (category: SerializedCategory) => void;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -67,6 +79,9 @@ export default function DayColumn({
               onToggled={onTaskToggled}
               onUpdated={onTaskUpdated}
               onDeleted={onTaskDeleted}
+              onReplaced={onTaskReplaced}
+              onSeriesDeleted={onSeriesDeleted}
+              onSeriesUpdated={onSeriesUpdated}
             />
           ))}
         </div>

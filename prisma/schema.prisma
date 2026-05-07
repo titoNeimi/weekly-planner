@@ -13,28 +13,56 @@ datasource db {
 }
 
 model Task {
-  id        String   @id @default(cuid())
-  title      String
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id])
-  notes      String?
-  done      Boolean  @default(false)
-  date      DateTime
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String         @id @default(cuid())
+  title           String
+  categoryId      String?
+  category        Category?      @relation(fields: [categoryId], references: [id])
+  notes           String?
+  done            Boolean        @default(false)
+  date            DateTime
+  userId          String
+  recurringTaskId String?
+  recurringTask   RecurringTask? @relation(fields: [recurringTaskId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model RecurringTask {
+  id                 String        @id @default(cuid())
+  title              String
+  userId             String
+  type               RecurringType
+  interval           Int
+  startDate          DateTime
+  endDate            DateTime?
+  endCount           Int?
+  categoryId         String?
+  category           Category?     @relation(fields: [categoryId], references: [id])
+  notes              String?
+  deletedOccurrences DateTime[]
+  tasks              Task[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+enum RecurringType {
+  ANNUAL
+  WEEKLY
+  DAILY
+  MONTHLY
 }
 
 model Team {
-  id String @id @default(cuid())
-  name String
-  membersIDs String[] 
+  id         String   @id @default(cuid())
+  name       String
+  membersIDs String[]
 }
 
 model Category {
-  id     String @id @default(cuid())
-  name   String
-  color  String
-  userId String
-  tasks  Task[]
+  id             String          @id @default(cuid())
+  name           String
+  color          String
+  userId         String
+  tasks          Task[]
+  recurringTasks RecurringTask[]
 }

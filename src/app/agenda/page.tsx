@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import WeekView from "../dashboard/WeekView";
+import { getTasksForRange } from "@/lib/get-tasks-for-range";
 
 function getWeekStart(dateStr?: string): Date {
   const base = dateStr ? new Date(dateStr) : new Date();
@@ -28,21 +29,12 @@ export default async function AgendaPage({
   const monday = getWeekStart(week);
 
   const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  sunday.setUTCHours(23, 59, 59, 999);
 
   const [tasks, categories] = await Promise.all([
-    prisma.task.findMany({
-      where: {
-        userId: user.id,
-        date: { gte: monday, lte: sunday },
-      },
-      include: { category: { select: { id: true, name: true, color: true } } },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.category.findMany({
-      where: { userId: user.id },
-    }),
+    getTasksForRange(user.id, monday, sunday),
+    prisma.category.findMany({ where: { userId: user.id } }),
   ]);
 
   return (

@@ -9,8 +9,18 @@ import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
 
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function getToday(): string {
@@ -51,22 +61,30 @@ export default function TaskOverview({
     .filter((t) => t.date.slice(0, 10) < today)
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  const upcomingTasks = filteredTasks.filter((t) => t.date.slice(0, 10) >= today);
+  const upcomingTasks = filteredTasks.filter(
+    (t) => t.date.slice(0, 10) >= today,
+  );
 
-  const pastByDate = pastTasks.reduce<Record<string, SerializedTask[]>>((acc, t) => {
-    const d = t.date.slice(0, 10);
-    if (!acc[d]) acc[d] = [];
-    acc[d].push(t);
-    return acc;
-  }, {});
+  const pastByDate = pastTasks.reduce<Record<string, SerializedTask[]>>(
+    (acc, t) => {
+      const d = t.date.slice(0, 10);
+      if (!acc[d]) acc[d] = [];
+      acc[d].push(t);
+      return acc;
+    },
+    {},
+  );
   const pastDates = Object.keys(pastByDate).sort((a, b) => b.localeCompare(a));
 
-  const upcomingByDate = upcomingTasks.reduce<Record<string, SerializedTask[]>>((acc, t) => {
-    const d = t.date.slice(0, 10);
-    if (!acc[d]) acc[d] = [];
-    acc[d].push(t);
-    return acc;
-  }, {});
+  const upcomingByDate = upcomingTasks.reduce<Record<string, SerializedTask[]>>(
+    (acc, t) => {
+      const d = t.date.slice(0, 10);
+      if (!acc[d]) acc[d] = [];
+      acc[d].push(t);
+      return acc;
+    },
+    {},
+  );
   const upcomingDates = Object.keys(upcomingByDate).sort();
 
   function handleTaskCreated(task: SerializedTask) {
@@ -80,6 +98,27 @@ export default function TaskOverview({
   }
   function handleTaskDeleted(id: string) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+  function handleTaskReplaced(oldId: string, task: SerializedTask) {
+    setTasks((prev) => prev.map((t) => (t.id === oldId ? task : t)));
+  }
+  function handleSeriesDeleted(recurringTaskId: string) {
+    setTasks((prev) =>
+      prev.filter((t) => t.recurringTaskId !== recurringTaskId),
+    );
+  }
+  function handleSeriesUpdated(
+    recurringTaskId: string,
+    changes: Pick<
+      SerializedTask,
+      "title" | "categoryId" | "notes" | "category"
+    >,
+  ) {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.recurringTaskId === recurringTaskId ? { ...t, ...changes } : t,
+      ),
+    );
   }
   function handleCategoryCreated(cat: SerializedCategory) {
     setCategories((prev) => [...prev, cat]);
@@ -158,7 +197,9 @@ export default function TaskOverview({
                 {overdueCount} overdue
               </span>
             )}
-            <span className="text-xs text-gray-400">{pastTasks.length} task{pastTasks.length !== 1 ? "s" : ""}</span>
+            <span className="text-xs text-gray-400">
+              {pastTasks.length} task{pastTasks.length !== 1 ? "s" : ""}
+            </span>
           </button>
 
           {!pastHidden && (
@@ -177,6 +218,9 @@ export default function TaskOverview({
                         onToggled={handleTaskToggled}
                         onUpdated={handleTaskUpdated}
                         onDeleted={handleTaskDeleted}
+                        onReplaced={handleTaskReplaced}
+                        onSeriesDeleted={handleSeriesDeleted}
+                        onSeriesUpdated={handleSeriesUpdated}
                       />
                     ))}
                   </div>

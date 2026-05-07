@@ -27,12 +27,21 @@ export type SerializedTask = {
   done: boolean;
   date: string;
   userId: string;
+  recurringTaskId: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAY_LABELS_LONG = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAY_LABELS_LONG = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const MONTH_NAMES = [
   "January",
@@ -168,6 +177,30 @@ export default function WeekView({
 
   function handleTaskDeleted(id: string) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  function handleTaskReplaced(oldId: string, task: SerializedTask) {
+    setTasks((prev) => prev.map((t) => (t.id === oldId ? task : t)));
+  }
+
+  function handleSeriesDeleted(recurringTaskId: string) {
+    setTasks((prev) =>
+      prev.filter((t) => t.recurringTaskId !== recurringTaskId),
+    );
+  }
+
+  function handleSeriesUpdated(
+    recurringTaskId: string,
+    changes: Pick<
+      SerializedTask,
+      "title" | "categoryId" | "notes" | "category"
+    >,
+  ) {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.recurringTaskId === recurringTaskId ? { ...t, ...changes } : t,
+      ),
+    );
   }
 
   function handleCategoryCreated(category: SerializedCategory) {
@@ -382,7 +415,9 @@ export default function WeekView({
       {view === "week" ? (
         <>
           {/* Mobile: single-day view (< sm) */}
-          <div className={`sm:hidden transition-opacity ${fetching ? "opacity-50" : ""}`}>
+          <div
+            className={`sm:hidden transition-opacity ${fetching ? "opacity-50" : ""}`}
+          >
             <div className="mb-3 flex items-center justify-between">
               <button
                 onClick={() => setActiveDayIndex((i) => Math.max(0, i - 1))}
@@ -418,6 +453,9 @@ export default function WeekView({
               onTaskToggled={handleTaskToggled}
               onTaskUpdated={handleTaskUpdated}
               onTaskDeleted={handleTaskDeleted}
+              onTaskReplaced={handleTaskReplaced}
+              onSeriesDeleted={handleSeriesDeleted}
+              onSeriesUpdated={handleSeriesUpdated}
               onCategoryCreated={handleCategoryCreated}
             />
           </div>
@@ -431,19 +469,27 @@ export default function WeekView({
                 ? `${DAY_LABELS_LONG[chunkStart]} ${chunkDays[0].getUTCDate()}`
                 : `${DAY_LABELS_LONG[chunkStart]} ${chunkDays[0].getUTCDate()} – ${DAY_LABELS_LONG[chunkStart + chunkDays.length - 1]} ${chunkDays[chunkDays.length - 1].getUTCDate()}`;
             return (
-              <div className={`hidden sm:flex 2xl:hidden flex-col gap-3 transition-opacity ${fetching ? "opacity-50" : ""}`}>
+              <div
+                className={`hidden sm:flex 2xl:hidden flex-col gap-3 transition-opacity ${fetching ? "opacity-50" : ""}`}
+              >
                 <div className="flex items-center justify-between">
                   <button
-                    onClick={() => setActiveDayIndex(Math.max(0, chunkStart - 3))}
+                    onClick={() =>
+                      setActiveDayIndex(Math.max(0, chunkStart - 3))
+                    }
                     disabled={chunkStart === 0}
                     className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
                     aria-label="Previous days"
                   >
                     ←
                   </button>
-                  <span className="text-sm font-medium text-gray-700">{chunkLabel}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {chunkLabel}
+                  </span>
                   <button
-                    onClick={() => setActiveDayIndex(Math.min(6, chunkStart + 3))}
+                    onClick={() =>
+                      setActiveDayIndex(Math.min(6, chunkStart + 3))
+                    }
                     disabled={chunkStart + 3 >= 7}
                     className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
                     aria-label="Next days"
@@ -454,7 +500,8 @@ export default function WeekView({
                 <div className="grid grid-cols-3 gap-3">
                   {chunkDays.map((date, i) => {
                     const dayTasks = visibleTasks.filter(
-                      (t) => t.date.slice(0, 10) === date.toISOString().slice(0, 10),
+                      (t) =>
+                        t.date.slice(0, 10) === date.toISOString().slice(0, 10),
                     );
                     return (
                       <DayColumn
@@ -467,6 +514,9 @@ export default function WeekView({
                         onTaskToggled={handleTaskToggled}
                         onTaskUpdated={handleTaskUpdated}
                         onTaskDeleted={handleTaskDeleted}
+                        onTaskReplaced={handleTaskReplaced}
+                        onSeriesDeleted={handleSeriesDeleted}
+                        onSeriesUpdated={handleSeriesUpdated}
                         onCategoryCreated={handleCategoryCreated}
                       />
                     );
@@ -495,6 +545,9 @@ export default function WeekView({
                   onTaskToggled={handleTaskToggled}
                   onTaskUpdated={handleTaskUpdated}
                   onTaskDeleted={handleTaskDeleted}
+                  onTaskReplaced={handleTaskReplaced}
+                  onSeriesDeleted={handleSeriesDeleted}
+                  onSeriesUpdated={handleSeriesUpdated}
                   onCategoryCreated={handleCategoryCreated}
                 />
               );
