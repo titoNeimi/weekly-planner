@@ -15,6 +15,9 @@ export async function PATCH(
   const { id } = await params;
   const { name } = await request.json();
 
+  if (!name?.trim())
+    return Response.json({ error: "Missing required fields" }, { status: 400 });
+
   const [profile, teamMember] = await Promise.all([
     getProfile(user.id),
     getTeamMember(user.id, id),
@@ -27,7 +30,7 @@ export async function PATCH(
 
   if (!canUpdate) return Response.json({ error: "Forbidden" }, { status: 403 });
 
-  await prisma.team.update({ where: { id }, data: { name } });
+  await prisma.team.update({ where: { id }, data: { name: name.trim() } });
   return new Response(null, { status: 204 });
 }
 
@@ -79,6 +82,7 @@ export async function DELETE(
   if (!canDelete) return Response.json({ error: "Forbidden" }, { status: 403 });
 
   await prisma.$transaction([
+    prisma.teamTask.deleteMany({ where: { teamId: id } }),
     prisma.invitation.deleteMany({ where: { teamId: id } }),
     prisma.teamMember.deleteMany({ where: { teamId: id } }),
     prisma.team.delete({ where: { id } }),

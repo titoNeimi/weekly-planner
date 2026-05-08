@@ -32,9 +32,23 @@ export default async function AgendaPage({
   sunday.setUTCDate(monday.getUTCDate() + 6);
   sunday.setUTCHours(23, 59, 59, 999);
 
-  const [tasks, categories] = await Promise.all([
+  const [tasks, categories, rawTeamTasks] = await Promise.all([
     getTasksForRange(user.id, monday, sunday),
     prisma.category.findMany({ where: { userId: user.id } }),
+    prisma.teamTask.findMany({
+      where: {
+        team: { members: { some: { userId: user.id } } },
+        assignedTo: { userId: user.id },
+        date: { gte: monday, lte: sunday },
+      },
+      include: {
+        team: { select: { id: true, name: true } },
+        assignedTo: {
+          select: { profile: { select: { name: true, avatarUrl: true } } },
+        },
+      },
+      orderBy: { date: "asc" },
+    }),
   ]);
 
   return (
@@ -43,6 +57,20 @@ export default async function AgendaPage({
         tasks={tasks.map((t) => ({
           ...t,
           date: t.date.toISOString(),
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        }))}
+        teamTasks={rawTeamTasks.map((t) => ({
+          id: t.id,
+          title: t.title,
+          notes: t.notes,
+          date: t.date.toISOString(),
+          done: t.done,
+          teamId: t.teamId,
+          teamName: t.team.name,
+          assignedToName: t.assignedTo?.profile.name ?? null,
+          assignedToAvatarUrl: t.assignedTo?.profile.avatarUrl ?? null,
+          createdByUserId: t.createdByUserId,
           createdAt: t.createdAt.toISOString(),
           updatedAt: t.updatedAt.toISOString(),
         }))}

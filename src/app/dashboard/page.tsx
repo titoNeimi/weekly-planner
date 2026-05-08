@@ -14,18 +14,44 @@ export default async function DashboardPage() {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
 
-  const [tasks, categories, recurringInstances] = await Promise.all([
-    prisma.task.findMany({
-      where: {
-        userId: user.id,
-        OR: [{ date: { gte: today } }, { date: { lt: today }, done: false }],
-      },
-      include: { category: { select: { id: true, name: true, color: true } } },
-      orderBy: { date: "asc" },
-    }),
-    prisma.category.findMany({ where: { userId: user.id } }),
-    getNextRecurringInstances(user.id, today),
-  ]);
+  const [tasks, categories, recurringInstances, rawTeamTasks] =
+    await Promise.all([
+      prisma.task.findMany({
+        where: {
+          userId: user.id,
+          OR: [{ date: { gte: today } }, { date: { lt: today }, done: false }],
+        },
+        include: {
+          category: { select: { id: true, name: true, color: true } },
+        },
+        orderBy: { date: "asc" },
+      }),
+      prisma.category.findMany({ where: { userId: user.id } }),
+      getNextRecurringInstances(user.id, today),
+      prisma.teamTask.findMany({
+        where: {
+          team: { members: { some: { userId: user.id } } },
+          AND: [
+            {
+              OR: [{ assignedToId: null }, { assignedTo: { userId: user.id } }],
+            },
+            {
+              OR: [
+                { date: { gte: today } },
+                { AND: [{ date: { lt: today } }, { done: false }] },
+              ],
+            },
+          ],
+        },
+        include: {
+          team: { select: { id: true, name: true } },
+          assignedTo: {
+            select: { profile: { select: { name: true, avatarUrl: true } } },
+          },
+        },
+        orderBy: { date: "asc" },
+      }),
+    ]);
 
   const allTasks = [...tasks, ...recurringInstances].sort(
     (a, b) => a.date.getTime() - b.date.getTime(),
@@ -37,6 +63,20 @@ export default async function DashboardPage() {
         tasks={allTasks.map((t) => ({
           ...t,
           date: t.date.toISOString(),
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        }))}
+        teamTasks={rawTeamTasks.map((t) => ({
+          id: t.id,
+          title: t.title,
+          notes: t.notes,
+          date: t.date.toISOString(),
+          done: t.done,
+          teamId: t.teamId,
+          teamName: t.team.name,
+          assignedToName: t.assignedTo?.profile.name ?? null,
+          assignedToAvatarUrl: t.assignedTo?.profile.avatarUrl ?? null,
+          createdByUserId: t.createdByUserId,
           createdAt: t.createdAt.toISOString(),
           updatedAt: t.updatedAt.toISOString(),
         }))}

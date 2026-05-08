@@ -57,6 +57,7 @@ model Team {
   name        String
   members     TeamMember[]
   invitations Invitation[]
+  teamTasks   TeamTask[]
   createdAt   DateTime     @default(now())
 }
 
@@ -66,6 +67,7 @@ model TeamMember {
   team     Team     @relation(fields: [teamId], references: [id])
   userId   String
   profile  Profile  @relation(fields: [userId], references: [userId])
+  assignedTasks TeamTask[]
   role     TeamRole @default(USER)
   joinedAt DateTime @default(now())
 }
@@ -74,6 +76,21 @@ enum TeamRole {
   OWNER
   ADMIN
   USER
+}
+
+model TeamTask {
+  id              String      @id @default(cuid())
+  title           String
+  notes           String?
+  date            DateTime
+  done            Boolean     @default(false)
+  teamId          String
+  team            Team        @relation(fields: [teamId], references: [id])
+  assignedToId    String?
+  assignedTo      TeamMember? @relation(fields: [assignedToId], references: [id])
+  createdByUserId String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model Invitation {

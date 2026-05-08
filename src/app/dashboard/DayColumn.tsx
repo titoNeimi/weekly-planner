@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import type { SerializedTask, SerializedCategory } from "./WeekView";
+import type {
+  SerializedTask,
+  SerializedCategory,
+  SerializedTeamTask,
+} from "./WeekView";
 import TaskItem from "./TaskItem";
+import TeamTaskItem from "./TeamTaskItem";
 import AddTaskModal from "./AddTaskModal";
 
 export default function DayColumn({
   label,
   date,
   tasks,
+  teamTasks,
   categories,
   onTaskCreated,
   onTaskToggled,
@@ -22,6 +28,7 @@ export default function DayColumn({
   label: string;
   date: Date;
   tasks: SerializedTask[];
+  teamTasks: SerializedTeamTask[];
   categories: SerializedCategory[];
   onTaskCreated: (task: SerializedTask) => void;
   onTaskToggled: (id: string, done: boolean) => void;
@@ -83,6 +90,9 @@ export default function DayColumn({
               onSeriesDeleted={onSeriesDeleted}
               onSeriesUpdated={onSeriesUpdated}
             />
+          ))}
+          {teamTasks.map((task) => (
+            <TeamTaskItem key={task.id} task={task} />
           ))}
         </div>
 

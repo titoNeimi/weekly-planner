@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import type { SerializedTask, SerializedCategory } from "./WeekView";
+import type {
+  SerializedTask,
+  SerializedCategory,
+  SerializedTeamTask,
+} from "./WeekView";
 import TaskItem from "./TaskItem";
+import TeamTaskItem from "./TeamTaskItem";
 import AddTaskModal from "./AddTaskModal";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
@@ -40,9 +45,11 @@ function formatDateLabel(dateStr: string): string {
 
 export default function TaskOverview({
   tasks: initialTasks,
+  teamTasks,
   categories: initialCategories,
 }: {
   tasks: SerializedTask[];
+  teamTasks: SerializedTeamTask[];
   categories: SerializedCategory[];
 }) {
   const [tasks, setTasks] = useState(initialTasks);
@@ -65,6 +72,11 @@ export default function TaskOverview({
     (t) => t.date.slice(0, 10) >= today,
   );
 
+  const pastTeamTasks = teamTasks.filter((t) => t.date.slice(0, 10) < today);
+  const upcomingTeamTasks = teamTasks.filter(
+    (t) => t.date.slice(0, 10) >= today,
+  );
+
   const pastByDate = pastTasks.reduce<Record<string, SerializedTask[]>>(
     (acc, t) => {
       const d = t.date.slice(0, 10);
@@ -74,7 +86,17 @@ export default function TaskOverview({
     },
     {},
   );
-  const pastDates = Object.keys(pastByDate).sort((a, b) => b.localeCompare(a));
+  const pastTeamByDate = pastTeamTasks.reduce<
+    Record<string, SerializedTeamTask[]>
+  >((acc, t) => {
+    const d = t.date.slice(0, 10);
+    if (!acc[d]) acc[d] = [];
+    acc[d].push(t);
+    return acc;
+  }, {});
+  const pastDates = [
+    ...new Set([...Object.keys(pastByDate), ...Object.keys(pastTeamByDate)]),
+  ].sort((a, b) => b.localeCompare(a));
 
   const upcomingByDate = upcomingTasks.reduce<Record<string, SerializedTask[]>>(
     (acc, t) => {
@@ -85,7 +107,20 @@ export default function TaskOverview({
     },
     {},
   );
-  const upcomingDates = Object.keys(upcomingByDate).sort();
+  const upcomingTeamByDate = upcomingTeamTasks.reduce<
+    Record<string, SerializedTeamTask[]>
+  >((acc, t) => {
+    const d = t.date.slice(0, 10);
+    if (!acc[d]) acc[d] = [];
+    acc[d].push(t);
+    return acc;
+  }, {});
+  const upcomingDates = [
+    ...new Set([
+      ...Object.keys(upcomingByDate),
+      ...Object.keys(upcomingTeamByDate),
+    ]),
+  ].sort();
 
   function handleTaskCreated(task: SerializedTask) {
     setTasks((prev) => [...prev, task]);
@@ -124,7 +159,7 @@ export default function TaskOverview({
     setCategories((prev) => [...prev, cat]);
   }
 
-  const overdueCount = pastTasks.length;
+  const overdueCount = pastTasks.length + pastTeamTasks.length;
 
   return (
     <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
@@ -171,25 +206,62 @@ export default function TaskOverview({
         </div>
       )}
 
+      {/* Upcoming tasks by date */}
+      {upcomingDates.length > 0 ? (
+        <div className="flex flex-col gap-6">
+          {upcomingDates.map((dateStr) => (
+            <div key={dateStr} className="flex flex-col gap-2">
+              <h2 className="text-sm font-semibold text-gray-700">
+                {formatDateLabel(dateStr)}
+              </h2>
+              <div className="flex flex-col gap-2">
+                {(upcomingByDate[dateStr] ?? []).map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    categories={categories}
+                    onToggled={handleTaskToggled}
+                    onUpdated={handleTaskUpdated}
+                    onDeleted={handleTaskDeleted}
+                    onReplaced={handleTaskReplaced}
+                    onSeriesDeleted={handleSeriesDeleted}
+                    onSeriesUpdated={handleSeriesUpdated}
+                  />
+                ))}
+                {(upcomingTeamByDate[dateStr] ?? []).map((task) => (
+                  <TeamTaskItem key={task.id} task={task} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        pastDates.length === 0 && (
+          <div className="py-12 text-center text-sm text-gray-400">
+            No tasks yet
+          </div>
+        )
+      )}
+
       {/* Past tasks */}
-      {pastTasks.length > 0 && (
+      {pastDates.length > 0 && (
         <div className="flex flex-col gap-3">
           <button
             onClick={() => setPastHidden((v) => !v)}
-            className="flex items-center gap-2 group w-fit"
+            className="group flex w-fit items-center gap-2"
           >
             {pastHidden ? (
               <ChevronRight
                 size={15}
-                className="text-gray-400 group-hover:text-gray-600 transition"
+                className="text-gray-400 transition group-hover:text-gray-600"
               />
             ) : (
               <ChevronDown
                 size={15}
-                className="text-gray-400 group-hover:text-gray-600 transition"
+                className="text-gray-400 transition group-hover:text-gray-600"
               />
             )}
-            <span className="text-sm font-medium text-gray-500 group-hover:text-gray-700 transition">
+            <span className="text-sm font-medium text-gray-500 transition group-hover:text-gray-700">
               Past
             </span>
             {overdueCount > 0 && (
@@ -198,7 +270,7 @@ export default function TaskOverview({
               </span>
             )}
             <span className="text-xs text-gray-400">
-              {pastTasks.length} task{pastTasks.length !== 1 ? "s" : ""}
+              {pastDates.length} date{pastDates.length !== 1 ? "s" : ""}
             </span>
           </button>
 
@@ -210,7 +282,7 @@ export default function TaskOverview({
                     {formatDateLabel(dateStr)}
                   </h2>
                   <div className="flex flex-col gap-2">
-                    {pastByDate[dateStr].map((task) => (
+                    {(pastByDate[dateStr] ?? []).map((task) => (
                       <TaskItem
                         key={task.id}
                         task={task}
@@ -223,43 +295,15 @@ export default function TaskOverview({
                         onSeriesUpdated={handleSeriesUpdated}
                       />
                     ))}
+                    {(pastTeamByDate[dateStr] ?? []).map((task) => (
+                      <TeamTaskItem key={task.id} task={task} />
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-      )}
-
-      {/* Upcoming tasks by date */}
-      {upcomingDates.length > 0 ? (
-        <div className="flex flex-col gap-6">
-          {upcomingDates.map((dateStr) => (
-            <div key={dateStr} className="flex flex-col gap-2">
-              <h2 className="text-sm font-semibold text-gray-700">
-                {formatDateLabel(dateStr)}
-              </h2>
-              <div className="flex flex-col gap-2">
-                {upcomingByDate[dateStr].map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    categories={categories}
-                    onToggled={handleTaskToggled}
-                    onUpdated={handleTaskUpdated}
-                    onDeleted={handleTaskDeleted}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        pastTasks.length === 0 && (
-          <div className="py-12 text-center text-sm text-gray-400">
-            No tasks yet
-          </div>
-        )
       )}
 
       {addTaskOpen && (

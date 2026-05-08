@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, getTeamMember } from "@/lib/team-auth";
-import type { TeamRole } from "@/generated/prisma/client";
+import { TeamRole } from "@/generated/prisma/enums";
+
+const ASSIGNABLE_ROLES: TeamRole[] = ["ADMIN", "USER"];
 
 export async function PATCH(
   request: Request,
@@ -14,7 +16,10 @@ export async function PATCH(
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id, memberId } = await params;
-  const { role } = (await request.json()) as { role: TeamRole };
+  const { role } = await request.json();
+
+  if (!ASSIGNABLE_ROLES.includes(role))
+    return Response.json({ error: "Invalid role" }, { status: 400 });
 
   const [profile, actorMember] = await Promise.all([
     getProfile(user.id),

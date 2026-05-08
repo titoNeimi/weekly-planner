@@ -32,6 +32,21 @@ export type SerializedTask = {
   updatedAt: string;
 };
 
+export type SerializedTeamTask = {
+  id: string;
+  title: string;
+  notes: string | null;
+  date: string;
+  done: boolean;
+  teamId: string;
+  teamName: string;
+  assignedToName: string | null;
+  assignedToAvatarUrl: string | null;
+  createdByUserId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_LABELS_LONG = [
   "Monday",
@@ -90,15 +105,18 @@ function getCurrentWeekStart(): string {
 
 export default function WeekView({
   tasks: initialTasks,
+  teamTasks: initialTeamTasks,
   categories: initialCategories,
   weekStart: initialWeekStart,
 }: {
   tasks: SerializedTask[];
+  teamTasks: SerializedTeamTask[];
   categories: SerializedCategory[];
   weekStart: string;
 }) {
   const [weekStart, setWeekStart] = useState(initialWeekStart);
   const [tasks, setTasks] = useState(initialTasks);
+  const [teamTasks, setTeamTasks] = useState(initialTeamTasks);
   const [fetching, setFetching] = useState(false);
   const [categories, setCategories] =
     useState<SerializedCategory[]>(initialCategories);
@@ -137,11 +155,19 @@ export default function WeekView({
     const from = days[0].toISOString();
     const to = new Date(days[6]);
     to.setUTCHours(23, 59, 59, 999);
+    const toStr = to.toISOString();
 
     setFetching(true);
-    const res = await fetch(`/api/task?from=${from}&to=${to.toISOString()}`);
-    const data: SerializedTask[] = await res.json();
+    const [tasksRes, teamTasksRes] = await Promise.all([
+      fetch(`/api/task?from=${from}&to=${toStr}`),
+      fetch(`/api/team-task?from=${from}&to=${toStr}&assignedToMe=true`),
+    ]);
+    const [data, teamData] = await Promise.all([
+      tasksRes.json() as Promise<SerializedTask[]>,
+      teamTasksRes.json() as Promise<SerializedTeamTask[]>,
+    ]);
     setTasks(data);
+    setTeamTasks(teamData);
     setFetching(false);
   }
 
@@ -448,6 +474,11 @@ export default function WeekView({
                   t.date.slice(0, 10) ===
                   days[activeDayIndex].toISOString().slice(0, 10),
               )}
+              teamTasks={teamTasks.filter(
+                (t) =>
+                  t.date.slice(0, 10) ===
+                  days[activeDayIndex].toISOString().slice(0, 10),
+              )}
               categories={categories}
               onTaskCreated={handleTaskCreated}
               onTaskToggled={handleTaskToggled}
@@ -499,16 +530,18 @@ export default function WeekView({
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {chunkDays.map((date, i) => {
-                    const dayTasks = visibleTasks.filter(
-                      (t) =>
-                        t.date.slice(0, 10) === date.toISOString().slice(0, 10),
-                    );
+                    const dateStr = date.toISOString().slice(0, 10);
                     return (
                       <DayColumn
                         key={chunkStart + i}
                         label={DAY_LABELS[chunkStart + i]}
                         date={date}
-                        tasks={dayTasks}
+                        tasks={visibleTasks.filter(
+                          (t) => t.date.slice(0, 10) === dateStr,
+                        )}
+                        teamTasks={teamTasks.filter(
+                          (t) => t.date.slice(0, 10) === dateStr,
+                        )}
                         categories={categories}
                         onTaskCreated={handleTaskCreated}
                         onTaskToggled={handleTaskToggled}
@@ -531,15 +564,18 @@ export default function WeekView({
             className={`hidden 2xl:grid grid-cols-7 gap-3 transition-opacity ${fetching ? "opacity-50" : "opacity-100"}`}
           >
             {days.map((date, i) => {
-              const dayTasks = visibleTasks.filter(
-                (t) => t.date.slice(0, 10) === date.toISOString().slice(0, 10),
-              );
+              const dateStr = date.toISOString().slice(0, 10);
               return (
                 <DayColumn
                   key={i}
                   label={DAY_LABELS[i]}
                   date={date}
-                  tasks={dayTasks}
+                  tasks={visibleTasks.filter(
+                    (t) => t.date.slice(0, 10) === dateStr,
+                  )}
+                  teamTasks={teamTasks.filter(
+                    (t) => t.date.slice(0, 10) === dateStr,
+                  )}
                   categories={categories}
                   onTaskCreated={handleTaskCreated}
                   onTaskToggled={handleTaskToggled}

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Avatar from "@/components/avatar";
+import TeamTasksSection from "./TeamTasksSection";
 
 type MemberRow = {
   id: string;
@@ -70,11 +71,13 @@ export default function TeamDetail({
   team,
   myRole,
   myMemberId,
+  myUserId,
   isGlobalAdmin,
 }: {
   team: TeamData;
   myRole: "OWNER" | "ADMIN" | "USER" | null;
   myMemberId: string | null;
+  myUserId: string;
   isGlobalAdmin: boolean;
 }) {
   const router = useRouter();
@@ -277,6 +280,15 @@ export default function TeamDetail({
           </>
         )}
       </div>
+
+      {/* Tasks */}
+      <TeamTasksSection
+        teamId={team.id}
+        members={team.members}
+        myUserId={myUserId}
+        myRole={myRole}
+        isGlobalAdmin={isGlobalAdmin}
+      />
 
       {/* Members */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">

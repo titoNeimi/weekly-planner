@@ -63,6 +63,7 @@ export default async function TeamDetailPage({
           }}
           myRole={myMember?.role ?? null}
           myMemberId={myMember?.id ?? null}
+          myUserId={user.id}
           isGlobalAdmin={isGlobalAdmin}
         />
       </div>
