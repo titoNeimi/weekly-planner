@@ -1,4 +1,5 @@
 export { prisma } from "./prisma";
+export { PrismaClient } from "./generated/client";
 export type {
   Task,
   RecurringTask,
