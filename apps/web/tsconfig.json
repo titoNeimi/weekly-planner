@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@weekly-planner/db": ["../../packages/db/src/index.ts"]
     }
   },
   "include": [

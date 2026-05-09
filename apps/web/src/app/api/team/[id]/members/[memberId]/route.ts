@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, getTeamMember } from "@/lib/team-auth";
-import { TeamRole } from "@/generated/prisma/enums";
+import { TeamRole } from "@weekly-planner/db";
 
 const ASSIGNABLE_ROLES: TeamRole[] = ["ADMIN", "USER"];
 

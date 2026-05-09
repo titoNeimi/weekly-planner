@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { Profile, TeamMember } from "@/generated/prisma/client";
+import type { Profile, TeamMember } from "@weekly-planner/db";
 
 export async function getTeamWithMembers(teamId: string) {
   return prisma.team.findUnique({
