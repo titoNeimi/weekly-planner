@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Task {
+  id              String         @id @default(cuid())
+  title           String
+  categoryId      String?
+  category        Category?      @relation(fields: [categoryId], references: [id])
+  notes           String?
+  done            Boolean        @default(false)
+  date            DateTime
+  userId          String
+  recurringTaskId String?
+  recurringTask   RecurringTask? @relation(fields: [recurringTaskId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model RecurringTask {
+  id                 String        @id @default(cuid())
+  title              String
+  userId             String
+  type               RecurringType
+  interval           Int
+  startDate          DateTime
+  endDate            DateTime?
+  endCount           Int?
+  categoryId         String?
+  category           Category?     @relation(fields: [categoryId], references: [id])
+  notes              String?
+  deletedOccurrences DateTime[]
+  tasks              Task[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+enum RecurringType {
+  ANNUAL
+  WEEKLY
+  DAILY
+  MONTHLY
+}
+
+model Team {
+  id          String       @id @default(cuid())
+  name        String
+  members     TeamMember[]
+  invitations Invitation[]
+  teamTasks   TeamTask[]
+  createdAt   DateTime     @default(now())
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  teamId   String
+  team     Team     @relation(fields: [teamId], references: [id])
+  userId   String
+  profile  Profile  @relation(fields: [userId], references: [userId])
+  assignedTasks TeamTask[]
+  role     TeamRole @default(USER)
+  joinedAt DateTime @default(now())
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  USER
+}
+
+model TeamTask {
+  id              String      @id @default(cuid())
+  title           String
+  notes           String?
+  date            DateTime
+  done            Boolean     @default(false)
+  teamId          String
+  team            Team        @relation(fields: [teamId], references: [id])
+  assignedToId    String?
+  assignedTo      TeamMember? @relation(fields: [assignedToId], references: [id])
+  createdByUserId String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Invitation {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  teamId          String
+  team            Team      @relation(fields: [teamId], references: [id])
+  maxUses         Int       @default(10)
+  uses            Int       @default(0)
+  endDate         DateTime?
+  createdByUserId String
+  createdAt       DateTime  @default(now())
+}
+
+model Profile {
+  userId      String       @id
+  role        AppRole      @default(USER)
+  name        String?
+  avatarUrl   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships TeamMember[]
+}
+
+enum AppRole {
+  ADMIN
+  USER
+}
+
+model Category {
+  id             String          @id @default(cuid())
+  name           String
+  color          String
+  userId         String
+  tasks          Task[]
+  recurringTasks RecurringTask[]
+}
