@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import "./globals.css";
 import Topbar from "@/components/topbar";
 import { UserProvider } from "@/context/UserContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import { Toaster } from "sonner";
 export const metadata: Metadata = {
   title: "Weekly Planner",
@@ -19,11 +20,13 @@ export default function RootLayout({
       className={`h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <UserProvider>
-          <Topbar />
-          {children}
-          <Toaster position="bottom-right" richColors />
-        </UserProvider>
+        <LanguageProvider>
+          <UserProvider>
+            <Topbar />
+            {children}
+            <Toaster position="bottom-right" richColors />
+          </UserProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
