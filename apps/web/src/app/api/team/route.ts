@@ -39,6 +39,16 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  await prisma.profile.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: {
+      userId: user.id,
+      name: user.user_metadata?.full_name ?? null,
+      avatarUrl: user.user_metadata?.avatar_url ?? null,
+    },
+  });
+
   const team = await prisma.$transaction(async (tx) => {
     const created = await tx.team.create({ data: { name: name.trim() } });
     await tx.teamMember.create({

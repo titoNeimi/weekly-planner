@@ -13,6 +13,7 @@ export interface TaskLike {
   category: { id: string; name: string; color: string } | null;
   notes: string | null;
   done: boolean;
+  isEvent: boolean;
   date: Date;
   userId: string;
   recurringTaskId: string | null;
@@ -41,12 +42,12 @@ export async function getTasksForRange(
     }),
   ]);
 
-  if (recurringTasks.length === 0) return realTasks;
+  if (recurringTasks.length === 0) return realTasks as TaskLike[];
 
   const materializedKeys = new Set(
     realTasks
       .filter((t) => t.recurringTaskId !== null)
-      .map((t) => `${t.recurringTaskId}_${t.date.getTime()}`),
+      .map((t) => `${t.recurringTaskId}_${t.date!.getTime()}`),
   );
 
   const virtualTasks: TaskLike[] = [];
@@ -77,6 +78,7 @@ export async function getTasksForRange(
         category: recurring.category,
         notes: recurring.notes,
         done: false,
+        isEvent: recurring.isEvent,
         date,
         userId,
         recurringTaskId: recurring.id,
@@ -86,7 +88,7 @@ export async function getTasksForRange(
     }
   }
 
-  const all = [...realTasks, ...virtualTasks];
+  const all = [...(realTasks as TaskLike[]), ...virtualTasks];
   all.sort((a, b) => a.date.getTime() - b.date.getTime());
   return all;
 }
@@ -138,6 +140,7 @@ export async function getNextRecurringInstances(
       category: recurring.category,
       notes: recurring.notes,
       done: false,
+      isEvent: recurring.isEvent,
       date: nextDate,
       userId,
       recurringTaskId: recurring.id,

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { computeReminderAt } from "@/lib/reminder";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, getTeamMember } from "@/lib/team-auth";
 
@@ -24,19 +25,38 @@ export async function PATCH(
   if (!task) return Response.json({ error: "Not found" }, { status: 404 });
 
   const body = await request.json();
-  const { title, notes, date, done, assignedToId } = body;
+  const { title, notes, date, done, assignedToId, teamCategoryId, isEvent } = body;
 
   if (title !== undefined && !title?.trim())
     return Response.json({ error: "Title cannot be empty" }, { status: 400 });
+
+  const reminderNeedsRecalc = "date" in body || "teamCategoryId" in body;
+  let reminderFields: { reminderAt: Date | null; reminderSentAt: null } | undefined;
+
+  if (reminderNeedsRecalc) {
+    const finalDate = "date" in body ? (date ? new Date(date) : null) : task.date;
+    const finalCategoryId =
+      "teamCategoryId" in body ? teamCategoryId : task.teamCategoryId;
+    const category = finalCategoryId
+      ? await prisma.teamCategory.findUnique({ where: { id: finalCategoryId } })
+      : null;
+    reminderFields = {
+      reminderAt: finalDate ? computeReminderAt(finalDate, category?.reminderHours) : null,
+      reminderSentAt: null,
+    };
+  }
 
   const updated = await prisma.teamTask.update({
     where: { id: taskId },
     data: {
       ...(title !== undefined && { title: title.trim() }),
       ...(notes !== undefined && { notes: notes ?? null }),
-      ...(date !== undefined && { date: new Date(date) }),
+      ...("date" in body && { date: date ? new Date(date) : null }),
       ...(done !== undefined && { done: Boolean(done) }),
       ...("assignedToId" in body && { assignedToId: assignedToId ?? null }),
+      ...("teamCategoryId" in body && { teamCategoryId: teamCategoryId ?? null }),
+      ...(isEvent !== undefined && { isEvent: Boolean(isEvent) }),
+      ...reminderFields,
     },
   });
 

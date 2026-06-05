@@ -13,7 +13,8 @@ export async function PATCH(
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { done, title, categoryId, notes, date, time } = await request.json();
+  const body = await request.json();
+  const { done, title, categoryId, notes, date, time, isEvent } = body;
 
   // Virtual task: materialize it with the patch already applied so we only
   // need one write. The new row gets a real cuid — the virtual ID is discarded.
@@ -30,8 +31,8 @@ export async function PATCH(
     if (title !== undefined) overrides.title = title.trim();
     if (categoryId !== undefined) overrides.categoryId = categoryId ?? null;
     if (notes !== undefined) overrides.notes = notes?.trim() || null;
-    if (date !== undefined)
-      overrides.date = new Date(`${date}T${time ?? "00:00"}:00.000Z`);
+    if ("date" in body)
+      overrides.date = date ? new Date(`${date}T${time ?? "00:00"}:00.000Z`) : null;
 
     const task = await prisma.$transaction(async (tx) => {
       // Suppress this occurrence from the virtual series permanently.
@@ -63,8 +64,9 @@ export async function PATCH(
   if (title !== undefined) data.title = title.trim();
   if (categoryId !== undefined) data.categoryId = categoryId ?? null;
   if (notes !== undefined) data.notes = notes?.trim() || null;
-  if (date !== undefined)
-    data.date = new Date(`${date}T${time ?? "00:00"}:00.000Z`);
+  if ("date" in body)
+    data.date = date ? new Date(`${date}T${time ?? "00:00"}:00.000Z`) : null;
+  if (isEvent !== undefined) data.isEvent = Boolean(isEvent);
 
   await prisma.task.updateMany({ where: { id, userId: user.id }, data });
 

@@ -56,7 +56,7 @@ export default async function AgendaPage({
       <WeekView
         tasks={tasks.map((t) => ({
           ...t,
-          date: t.date.toISOString(),
+          date: t.date ? t.date.toISOString() : null,
           createdAt: t.createdAt.toISOString(),
           updatedAt: t.updatedAt.toISOString(),
         }))}
@@ -64,8 +64,9 @@ export default async function AgendaPage({
           id: t.id,
           title: t.title,
           notes: t.notes,
-          date: t.date.toISOString(),
+          date: t.date ? t.date.toISOString() : null,
           done: t.done,
+          isEvent: t.isEvent,
           teamId: t.teamId,
           teamName: t.team.name,
           assignedToName: t.assignedTo?.profile.name ?? null,
