@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import type {
   SerializedTask,
   SerializedCategory,
@@ -12,36 +11,8 @@ import TeamTaskItem from "./TeamTaskItem";
 import AddTaskModal from "./AddTaskModal";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-function getToday(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatDateLabel(dateStr: string): string {
-  const today = getToday();
-  const d = new Date(today + "T00:00:00Z");
-  d.setUTCDate(d.getUTCDate() + 1);
-  const tomorrow = d.toISOString().slice(0, 10);
-  if (dateStr === today) return "Today";
-  if (dateStr === tomorrow) return "Tomorrow";
-  const date = new Date(dateStr + "T00:00:00Z");
-  return `${MONTH_NAMES[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
-}
+import { getLocalTodayStr } from "@/lib/date";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function TaskOverview({
   tasks: initialTasks,
@@ -57,23 +28,45 @@ export default function TaskOverview({
   const [pastHidden, setPastHidden] = useState(false);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [addTaskOpen, setAddTaskOpen] = useState(false);
+  const { t, ta, tpl } = useLanguage();
 
-  const today = getToday();
+  const today = getLocalTodayStr();
+
+  function formatDateLabel(dateStr: string): string {
+    const d = new Date(today + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() + 1);
+    const tomorrow = d.toISOString().slice(0, 10);
+    if (dateStr === today) return t("overview_today");
+    if (dateStr === tomorrow) return t("overview_tomorrow");
+    const date = new Date(dateStr + "T00:00:00Z");
+    const months = ta("months");
+    return `${months[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
+  }
 
   const filteredTasks = activeCategoryId
     ? tasks.filter((t) => t.categoryId === activeCategoryId)
     : tasks;
 
-  const pastTasks = filteredTasks
+  const undatedTasks = filteredTasks.filter((t) => t.date === null);
+  const datedTasks = filteredTasks.filter((t) => t.date !== null) as Array<
+    SerializedTask & { date: string }
+  >;
+
+  const pastTasks = datedTasks
     .filter((t) => t.date.slice(0, 10) < today)
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  const upcomingTasks = filteredTasks.filter(
+  const upcomingTasks = datedTasks.filter(
     (t) => t.date.slice(0, 10) >= today,
   );
 
-  const pastTeamTasks = teamTasks.filter((t) => t.date.slice(0, 10) < today);
-  const upcomingTeamTasks = teamTasks.filter(
+  const undatedTeamTasks = teamTasks.filter((t) => t.date === null);
+  const datedTeamTasks = teamTasks.filter((t) => t.date !== null) as Array<
+    SerializedTeamTask & { date: string }
+  >;
+
+  const pastTeamTasks = datedTeamTasks.filter((t) => t.date.slice(0, 10) < today);
+  const upcomingTeamTasks = datedTeamTasks.filter(
     (t) => t.date.slice(0, 10) >= today,
   );
 
@@ -122,6 +115,12 @@ export default function TaskOverview({
     ]),
   ].sort();
 
+  const todayTaskCount =
+    (upcomingByDate[today] ?? []).length +
+    (upcomingTeamByDate[today] ?? []).length;
+
+  const hasUndated = undatedTasks.length > 0 || undatedTeamTasks.length > 0;
+
   function handleTaskCreated(task: SerializedTask) {
     setTasks((prev) => [...prev, task]);
   }
@@ -161,16 +160,37 @@ export default function TaskOverview({
 
   const overdueCount = pastTasks.length + pastTeamTasks.length;
 
+  const taskItemProps = {
+    categories,
+    onToggled: handleTaskToggled,
+    onUpdated: handleTaskUpdated,
+    onDeleted: handleTaskDeleted,
+    onReplaced: handleTaskReplaced,
+    onCreated: handleTaskCreated,
+    onSeriesDeleted: handleSeriesDeleted,
+    onSeriesUpdated: handleSeriesUpdated,
+  };
+
+  const isEmpty =
+    upcomingDates.length === 0 && pastDates.length === 0 && !hasUndated;
+
   return (
     <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">All Tasks</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">{t("overview_title")}</h1>
+          {todayTaskCount > 0 && (
+            <p className="mt-0.5 text-sm text-gray-400">
+              {tpl("overview_for_today", { n: todayTaskCount })}
+            </p>
+          )}
+        </div>
         <button
           onClick={() => setAddTaskOpen(true)}
-          className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 transition"
+          className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover transition"
         >
-          + Add task
+          {t("overview_add_task")}
         </button>
       </div>
 
@@ -185,7 +205,7 @@ export default function TaskOverview({
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
             }`}
           >
-            All
+            {t("all")}
           </button>
           {categories.map((cat) => (
             <button
@@ -208,92 +228,101 @@ export default function TaskOverview({
 
       {/* Upcoming tasks by date */}
       {upcomingDates.length > 0 ? (
-        <div className="flex flex-col gap-6">
-          {upcomingDates.map((dateStr) => (
-            <div key={dateStr} className="flex flex-col gap-2">
-              <h2 className="text-sm font-semibold text-gray-700">
-                {formatDateLabel(dateStr)}
-              </h2>
-              <div className="flex flex-col gap-2">
-                {(upcomingByDate[dateStr] ?? []).map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    categories={categories}
-                    onToggled={handleTaskToggled}
-                    onUpdated={handleTaskUpdated}
-                    onDeleted={handleTaskDeleted}
-                    onReplaced={handleTaskReplaced}
-                    onSeriesDeleted={handleSeriesDeleted}
-                    onSeriesUpdated={handleSeriesUpdated}
-                  />
-                ))}
-                {(upcomingTeamByDate[dateStr] ?? []).map((task) => (
-                  <TeamTaskItem key={task.id} task={task} />
-                ))}
+        <div className="flex flex-col gap-8">
+          {upcomingDates.map((dateStr) => {
+            const isToday = dateStr === today;
+            const dateTasks = upcomingByDate[dateStr] ?? [];
+            const dateTeamTasks = upcomingTeamByDate[dateStr] ?? [];
+
+            if (isToday) {
+              return (
+                <div
+                  key={dateStr}
+                  className="flex flex-col gap-3 rounded-xl bg-primary-light px-4 py-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold text-primary">
+                      {t("overview_today")}
+                    </h2>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-primary">
+                      {dateTasks.length + dateTeamTasks.length}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    {dateTasks.map((task) => (
+                      <TaskItem key={task.id} task={task} {...taskItemProps} />
+                    ))}
+                    {dateTeamTasks.map((task) => (
+                      <TeamTaskItem key={task.id} task={task} />
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={dateStr} className="flex flex-col gap-2.5">
+                <h2 className="text-sm font-medium text-gray-500">
+                  {formatDateLabel(dateStr)}
+                </h2>
+                <div className="flex flex-col gap-2.5">
+                  {dateTasks.map((task) => (
+                    <TaskItem key={task.id} task={task} {...taskItemProps} />
+                  ))}
+                  {dateTeamTasks.map((task) => (
+                    <TeamTaskItem key={task.id} task={task} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        pastDates.length === 0 && (
-          <div className="py-12 text-center text-sm text-gray-400">
-            No tasks yet
+        !hasUndated && pastDates.length === 0 && (
+          <div className="py-16 text-center">
+            <p className="text-sm text-gray-400">{t("overview_nothing_planned")}</p>
+            <button
+              onClick={() => setAddTaskOpen(true)}
+              className="mt-3 text-sm text-primary hover:underline transition"
+            >
+              {t("overview_add_first")}
+            </button>
           </div>
         )
       )}
 
-      {/* Past tasks */}
+      {/* Past tasks — divider-row toggle */}
       {pastDates.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-5">
           <button
             onClick={() => setPastHidden((v) => !v)}
-            className="group flex w-fit items-center gap-2"
+            className="group flex items-center gap-3"
           >
-            {pastHidden ? (
-              <ChevronRight
-                size={15}
-                className="text-gray-400 transition group-hover:text-gray-600"
-              />
-            ) : (
-              <ChevronDown
-                size={15}
-                className="text-gray-400 transition group-hover:text-gray-600"
-              />
-            )}
-            <span className="text-sm font-medium text-gray-500 transition group-hover:text-gray-700">
-              Past
+            <div className="h-px flex-1 bg-gray-200 transition group-hover:bg-gray-300" />
+            <span className="flex items-center gap-2 text-xs text-gray-400 transition group-hover:text-gray-600">
+              {t("overview_past")}
+              {overdueCount > 0 && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                  {tpl("overview_overdue", { n: overdueCount })}
+                </span>
+              )}
             </span>
-            {overdueCount > 0 && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                {overdueCount} overdue
-              </span>
-            )}
-            <span className="text-xs text-gray-400">
-              {pastDates.length} date{pastDates.length !== 1 ? "s" : ""}
+            <span className="text-xs text-gray-300 transition group-hover:text-gray-500">
+              {pastHidden ? "↓" : "↑"}
             </span>
+            <div className="h-px flex-1 bg-gray-200 transition group-hover:bg-gray-300" />
           </button>
 
           {!pastHidden && (
-            <div className="flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-4">
+            <div className="flex flex-col gap-6">
               {pastDates.map((dateStr) => (
-                <div key={dateStr} className="flex flex-col gap-2">
-                  <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <div key={dateStr} className="flex flex-col gap-2.5">
+                  <h2 className="text-xs font-medium text-gray-400">
                     {formatDateLabel(dateStr)}
                   </h2>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2.5">
                     {(pastByDate[dateStr] ?? []).map((task) => (
-                      <TaskItem
-                        key={task.id}
-                        task={task}
-                        categories={categories}
-                        onToggled={handleTaskToggled}
-                        onUpdated={handleTaskUpdated}
-                        onDeleted={handleTaskDeleted}
-                        onReplaced={handleTaskReplaced}
-                        onSeriesDeleted={handleSeriesDeleted}
-                        onSeriesUpdated={handleSeriesUpdated}
-                      />
+                      <TaskItem key={task.id} task={task} {...taskItemProps} />
                     ))}
                     {(pastTeamByDate[dateStr] ?? []).map((task) => (
                       <TeamTaskItem key={task.id} task={task} />
@@ -303,6 +332,37 @@ export default function TaskOverview({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Undated tasks */}
+      {hasUndated && (
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-100" />
+            <span className="text-xs font-medium text-gray-400">{t("undated_section")}</span>
+            <div className="h-px flex-1 bg-gray-100" />
+          </div>
+          <div className="flex flex-col gap-2.5">
+            {undatedTasks.map((task) => (
+              <TaskItem key={task.id} task={task} {...taskItemProps} />
+            ))}
+            {undatedTeamTasks.map((task) => (
+              <TeamTaskItem key={task.id} task={task} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isEmpty && (
+        <div className="py-16 text-center">
+          <p className="text-sm text-gray-400">{t("overview_nothing_planned")}</p>
+          <button
+            onClick={() => setAddTaskOpen(true)}
+            className="mt-3 text-sm text-primary hover:underline transition"
+          >
+            {t("overview_add_first")}
+          </button>
         </div>
       )}
 

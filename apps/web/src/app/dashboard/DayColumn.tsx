@@ -9,6 +9,8 @@ import type {
 import TaskItem from "./TaskItem";
 import TeamTaskItem from "./TeamTaskItem";
 import AddTaskModal from "./AddTaskModal";
+import { getLocalTodayStr } from "@/lib/date";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function DayColumn({
   label,
@@ -46,21 +48,22 @@ export default function DayColumn({
   onCategoryCreated: (category: SerializedCategory) => void;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const { t } = useLanguage();
   const isToday =
-    date.toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10);
+    date.toISOString().slice(0, 10) === getLocalTodayStr();
 
   return (
     <>
       <div
-        className={`flex h-full flex-col gap-3 rounded-xl border p-3 sm:p-4 ${
+        className={`flex h-full flex-col rounded-xl border p-3 sm:p-4 ${
           isToday
-            ? "border-gray-900 bg-white shadow-sm"
+            ? "border-primary bg-white shadow-sm"
             : "border-gray-200 bg-white"
         }`}
       >
-        <div className="flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <span
-            className={`text-xs font-semibold uppercase tracking-widest ${
+            className={`text-[10px] font-semibold uppercase tracking-widest ${
               isToday ? "text-gray-900" : "text-gray-400"
             }`}
           >
@@ -69,7 +72,7 @@ export default function DayColumn({
           <span
             className={
               isToday
-                ? "flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-xs font-semibold text-white"
+                ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white"
                 : "text-sm tabular-nums text-gray-300"
             }
           >
@@ -77,7 +80,7 @@ export default function DayColumn({
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col gap-2">
+        <div className="flex flex-1 flex-col gap-2.5">
           {tasks.map((task) => (
             <TaskItem
               key={task.id}
@@ -87,6 +90,7 @@ export default function DayColumn({
               onUpdated={onTaskUpdated}
               onDeleted={onTaskDeleted}
               onReplaced={onTaskReplaced}
+              onCreated={onTaskCreated}
               onSeriesDeleted={onSeriesDeleted}
               onSeriesUpdated={onSeriesUpdated}
             />
@@ -94,13 +98,18 @@ export default function DayColumn({
           {teamTasks.map((task) => (
             <TeamTaskItem key={task.id} task={task} />
           ))}
+          {tasks.length === 0 && teamTasks.length === 0 && (
+            <p className="py-3 text-center text-xs text-gray-300">
+              {t("day_nothing_planned")}
+            </p>
+          )}
         </div>
 
         <button
           onClick={() => setModalOpen(true)}
-          className="w-full rounded-lg py-1.5 text-xs text-gray-300 hover:bg-gray-50 hover:text-gray-500 transition text-left pl-1"
+          className="mt-3 w-full rounded-lg border border-dashed border-gray-200 py-2 text-center text-xs text-gray-400 hover:border-gray-300 hover:text-gray-600 transition"
         >
-          + add task
+          {t("day_add_task")}
         </button>
       </div>
 

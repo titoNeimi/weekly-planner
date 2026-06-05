@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Users } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 type State = "loading" | "ready" | "joining" | "success" | "expired" | "invalid" | "error";
 
@@ -14,6 +15,7 @@ interface InvitePreview {
 export default function InvitePage() {
   const { code } = useParams<{ code: string }>();
   const router = useRouter();
+  const { t, tpl } = useLanguage();
 
   const [state, setState] = useState<State>("loading");
   const [preview, setPreview] = useState<InvitePreview | null>(null);
@@ -59,14 +61,14 @@ export default function InvitePage() {
       }
       if (!r.ok) {
         setState("ready");
-        setJoinError("Something went wrong. Please try again.");
+        setJoinError(t("invite_error_join"));
         return;
       }
       setState("success");
       setTimeout(() => router.replace("/dashboard"), 1500);
     } catch {
       setState("ready");
-      setJoinError("Something went wrong. Please try again.");
+      setJoinError(t("invite_error_join"));
     }
   };
 
@@ -77,7 +79,7 @@ export default function InvitePage() {
         {state === "loading" && (
           <>
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-gray-900 border-t-transparent" />
-            <p className="text-sm text-gray-500">Loading invite…</p>
+            <p className="text-sm text-gray-500">{t("invite_loading")}</p>
           </>
         )}
 
@@ -89,7 +91,7 @@ export default function InvitePage() {
 
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                You&apos;ve been invited to
+                {t("invite_invited_to")}
               </p>
               <h1 className="mt-1 text-2xl font-semibold text-gray-900">{preview.teamName}</h1>
             </div>
@@ -104,10 +106,10 @@ export default function InvitePage() {
               {state === "joining" ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Joining…
+                  {t("invite_joining")}
                 </>
               ) : (
-                "Accept Invite"
+                t("invite_accept")
               )}
             </button>
           </>
@@ -121,8 +123,8 @@ export default function InvitePage() {
               </svg>
             </div>
             <div>
-              <p className="text-base font-semibold text-gray-900">Joined {preview?.teamName}!</p>
-              <p className="mt-1 text-sm text-gray-500">Redirecting you now…</p>
+              <p className="text-base font-semibold text-gray-900">{tpl("invite_joined", { name: preview?.teamName ?? "" })}</p>
+              <p className="mt-1 text-sm text-gray-500">{t("invite_redirecting")}</p>
             </div>
           </>
         )}
@@ -133,16 +135,16 @@ export default function InvitePage() {
               <Users className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-base font-semibold text-gray-900">Invite expired</p>
+              <p className="text-base font-semibold text-gray-900">{t("invite_expired_title")}</p>
               <p className="mt-1 text-sm text-gray-500">
-                This link has expired or reached its maximum number of uses.
+                {t("invite_expired_body")}
               </p>
             </div>
             <a
               href="/dashboard"
               className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700"
             >
-              Go to Dashboard
+              {t("invite_go_dashboard")}
             </a>
           </>
         )}
@@ -153,27 +155,27 @@ export default function InvitePage() {
               <Users className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-base font-semibold text-gray-900">Invalid invite</p>
-              <p className="mt-1 text-sm text-gray-500">This invite link doesn&apos;t exist.</p>
+              <p className="text-base font-semibold text-gray-900">{t("invite_invalid_title")}</p>
+              <p className="mt-1 text-sm text-gray-500">{t("invite_invalid_body")}</p>
             </div>
             <a
               href="/dashboard"
               className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700"
             >
-              Go to Dashboard
+              {t("invite_go_dashboard")}
             </a>
           </>
         )}
 
         {state === "error" && (
           <>
-            <p className="text-base font-semibold text-gray-900">Something went wrong</p>
-            <p className="text-sm text-gray-500">Could not load this invite. Please try again.</p>
+            <p className="text-base font-semibold text-gray-900">{t("invite_error_title")}</p>
+            <p className="text-sm text-gray-500">{t("invite_error_body")}</p>
             <button
               onClick={loadPreview}
               className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700 cursor-pointer"
             >
-              Retry
+              {t("invite_retry")}
             </button>
           </>
         )}

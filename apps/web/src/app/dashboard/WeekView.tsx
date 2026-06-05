@@ -11,6 +11,8 @@ import {
 import type { CategoryColor } from "@/lib/category-colors";
 import CategoryContextMenu from "@/components/category-context-menu";
 import { toast } from "sonner";
+import { getLocalTodayStr } from "@/lib/date";
+import { useLanguage } from "@/context/LanguageContext";
 
 export type SerializedCategory = {
   id: string;
@@ -25,7 +27,8 @@ export type SerializedTask = {
   category: SerializedCategory | null;
   notes: string | null;
   done: boolean;
-  date: string;
+  isEvent: boolean;
+  date: string | null;
   userId: string;
   recurringTaskId: string | null;
   createdAt: string;
@@ -36,8 +39,9 @@ export type SerializedTeamTask = {
   id: string;
   title: string;
   notes: string | null;
-  date: string;
+  date: string | null;
   done: boolean;
+  isEvent: boolean;
   teamId: string;
   teamName: string;
   assignedToName: string | null;
@@ -47,31 +51,6 @@ export type SerializedTeamTask = {
   updatedAt: string;
 };
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAY_LABELS_LONG = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 function getWeekDays(weekStart: string): Date[] {
   const start = new Date(weekStart);
@@ -89,18 +68,19 @@ function shiftWeek(weekStart: string, direction: number): string {
 }
 
 function isCurrentWeek(days: Date[]): boolean {
-  const todayUTC = new Date().toISOString().slice(0, 10);
-  return days.some((d) => d.toISOString().slice(0, 10) === todayUTC);
+  const todayLocal = getLocalTodayStr();
+  return days.some((d) => d.toISOString().slice(0, 10) === todayLocal);
 }
 
 function getCurrentWeekStart(): string {
   const now = new Date();
-  const day = now.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now);
-  monday.setUTCDate(now.getUTCDate() + diff);
-  monday.setUTCHours(0, 0, 0, 0);
-  return monday.toISOString();
+  const localDay = now.getDay();
+  const diff = localDay === 0 ? -6 : 1 - localDay;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, "0");
+  const d = String(monday.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}T00:00:00.000Z`;
 }
 
 export default function WeekView({
@@ -114,6 +94,11 @@ export default function WeekView({
   categories: SerializedCategory[];
   weekStart: string;
 }) {
+  const { t, ta } = useLanguage();
+  const DAY_LABELS = ta("days_short");
+  const DAY_LABELS_LONG = ta("days_long");
+  const MONTH_NAMES = ta("months");
+
   const [weekStart, setWeekStart] = useState(initialWeekStart);
   const [tasks, setTasks] = useState(initialTasks);
   const [teamTasks, setTeamTasks] = useState(initialTeamTasks);
@@ -135,7 +120,7 @@ export default function WeekView({
   } | null>(null);
   const [view, setView] = useState<"week" | "month">("week");
   const [activeDayIndex, setActiveDayIndex] = useState<number>(() => {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = getLocalTodayStr();
     const idx = getWeekDays(initialWeekStart).findIndex(
       (d) => d.toISOString().slice(0, 10) === todayStr,
     );
@@ -181,7 +166,7 @@ export default function WeekView({
   async function goToday() {
     const today = getCurrentWeekStart();
     setWeekStart(today);
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = getLocalTodayStr();
     const idx = getWeekDays(today).findIndex(
       (d) => d.toISOString().slice(0, 10) === todayStr,
     );
@@ -274,73 +259,81 @@ export default function WeekView({
     setShowCategoryForm(false);
     setNewCategoryName("");
     setNewCategoryColor(CATEGORY_COLORS[0]);
-    toast.success("Category created");
+    toast.success(t("cat_created"));
   }
 
   const visibleTasks = activeCategoryId
     ? tasks.filter((t) => t.categoryId === activeCategoryId)
     : tasks;
 
+  const datedVisibleTasks = visibleTasks.filter((t) => t.date !== null);
+  const datedTeamTasks = teamTasks.filter((t) => t.date !== null);
+
+  const onCurrentWeek = isCurrentWeek(days);
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-3">
         {view === "week" ? (
-          <h1 className="text-base font-semibold text-gray-900 sm:text-xl">
-            {rangeLabel}
-          </h1>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate(-1)}
+              disabled={fetching}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+              aria-label={t("week_prev")}
+            >
+              ←
+            </button>
+            <h1 className="min-w-[8rem] text-center text-sm font-semibold text-gray-900 sm:min-w-[12rem] sm:text-lg">
+              {rangeLabel}
+            </h1>
+            <button
+              onClick={() => navigate(1)}
+              disabled={fetching}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+              aria-label={t("week_next")}
+            >
+              →
+            </button>
+          </div>
         ) : (
           <div />
         )}
         <div className="flex items-center gap-2">
-          {view === "week" && !isCurrentWeek(days) && (
+          {view === "week" && (
             <button
               onClick={goToday}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition"
+              disabled={onCurrentWeek}
+              className={`rounded-lg border px-3 py-1.5 text-sm transition ${
+                onCurrentWeek
+                  ? "border-transparent text-gray-300 cursor-default"
+                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
             >
-              Today
+              {t("week_today")}
             </button>
-          )}
-          {view === "week" && (
-            <>
-              <button
-                onClick={() => navigate(-1)}
-                disabled={fetching}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
-                aria-label="Previous week"
-              >
-                ←
-              </button>
-              <button
-                onClick={() => navigate(1)}
-                disabled={fetching}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
-                aria-label="Next week"
-              >
-                →
-              </button>
-            </>
           )}
           <div className="flex overflow-hidden rounded-lg border border-gray-200 text-sm">
             <button
               onClick={() => setView("week")}
               className={`px-3 py-1.5 transition ${
                 view === "week"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-primary text-white"
                   : "text-gray-500 hover:bg-gray-50"
               }`}
             >
-              Week
+              {t("week_view_week")}
             </button>
             <button
               onClick={() => setView("month")}
               className={`px-3 py-1.5 transition ${
                 view === "month"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-primary text-white"
                   : "text-gray-500 hover:bg-gray-50"
               }`}
             >
-              Month
+              {t("week_view_month")}
             </button>
           </div>
         </div>
@@ -358,7 +351,7 @@ export default function WeekView({
                   : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               }`}
             >
-              All
+              {t("all")}
             </button>
           )}
           {categories.map((cat) => (
@@ -388,7 +381,7 @@ export default function WeekView({
             }}
             className="shrink-0 rounded-full border border-dashed border-gray-300 px-3 py-1 text-xs text-gray-400 hover:border-gray-400 hover:text-gray-600 transition"
           >
-            + Category
+            {t("week_new_category")}
           </button>
         </div>
 
@@ -399,7 +392,7 @@ export default function WeekView({
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreateCategory()}
-              placeholder="Category name"
+              placeholder={t("week_category_name_placeholder")}
               className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
             />
             <div className="flex flex-wrap gap-1.5">
@@ -409,7 +402,7 @@ export default function WeekView({
                   onClick={() => setNewCategoryColor(color)}
                   className={`h-5 w-5 rounded-full transition ${SWATCH_CLASSES[color]} ${
                     newCategoryColor === color
-                      ? "ring-2 ring-offset-1 ring-gray-500"
+                      ? "ring-2 ring-offset-1 ring-primary"
                       : ""
                   }`}
                   aria-label={color}
@@ -424,14 +417,14 @@ export default function WeekView({
                 }}
                 className="rounded-lg px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-100 transition"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 disabled={!newCategoryName.trim() || creatingCategory}
                 onClick={handleCreateCategory}
-                className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition"
+                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-50 transition"
               >
-                {creatingCategory ? "Creating…" : "Create"}
+                {creatingCategory ? t("creating") : t("create")}
               </button>
             </div>
           </div>
@@ -448,8 +441,8 @@ export default function WeekView({
               <button
                 onClick={() => setActiveDayIndex((i) => Math.max(0, i - 1))}
                 disabled={activeDayIndex === 0}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
-                aria-label="Previous day"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+                aria-label={t("week_prev_day")}
               >
                 ←
               </button>
@@ -460,8 +453,8 @@ export default function WeekView({
               <button
                 onClick={() => setActiveDayIndex((i) => Math.min(6, i + 1))}
                 disabled={activeDayIndex === 6}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
-                aria-label="Next day"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+                aria-label={t("week_next_day")}
               >
                 →
               </button>
@@ -469,14 +462,14 @@ export default function WeekView({
             <DayColumn
               label={DAY_LABELS[activeDayIndex]}
               date={days[activeDayIndex]}
-              tasks={visibleTasks.filter(
+              tasks={datedVisibleTasks.filter(
                 (t) =>
-                  t.date.slice(0, 10) ===
+                  t.date!.slice(0, 10) ===
                   days[activeDayIndex].toISOString().slice(0, 10),
               )}
-              teamTasks={teamTasks.filter(
+              teamTasks={datedTeamTasks.filter(
                 (t) =>
-                  t.date.slice(0, 10) ===
+                  t.date!.slice(0, 10) ===
                   days[activeDayIndex].toISOString().slice(0, 10),
               )}
               categories={categories}
@@ -491,56 +484,24 @@ export default function WeekView({
             />
           </div>
 
-          {/* Medium: 3-column view (sm – 2xl) */}
-          {(() => {
-            const chunkStart = Math.floor(activeDayIndex / 3) * 3;
-            const chunkDays = days.slice(chunkStart, chunkStart + 3);
-            const chunkLabel =
-              chunkDays.length === 1
-                ? `${DAY_LABELS_LONG[chunkStart]} ${chunkDays[0].getUTCDate()}`
-                : `${DAY_LABELS_LONG[chunkStart]} ${chunkDays[0].getUTCDate()} – ${DAY_LABELS_LONG[chunkStart + chunkDays.length - 1]} ${chunkDays[chunkDays.length - 1].getUTCDate()}`;
-            return (
-              <div
-                className={`hidden sm:flex 2xl:hidden flex-col gap-3 transition-opacity ${fetching ? "opacity-50" : ""}`}
-              >
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() =>
-                      setActiveDayIndex(Math.max(0, chunkStart - 3))
-                    }
-                    disabled={chunkStart === 0}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
-                    aria-label="Previous days"
-                  >
-                    ←
-                  </button>
-                  <span className="text-sm font-medium text-gray-700">
-                    {chunkLabel}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setActiveDayIndex(Math.min(6, chunkStart + 3))
-                    }
-                    disabled={chunkStart + 3 >= 7}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
-                    aria-label="Next days"
-                  >
-                    →
-                  </button>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {chunkDays.map((date, i) => {
-                    const dateStr = date.toISOString().slice(0, 10);
-                    return (
+          {/* Tablet: 7-column horizontal scroll (sm – xl) */}
+          <div
+            className={`hidden sm:block xl:hidden transition-opacity ${fetching ? "opacity-50" : ""}`}
+          >
+            <div className="overflow-x-auto pb-2">
+              <div className="flex gap-3">
+                {days.map((date, i) => {
+                  const dateStr = date.toISOString().slice(0, 10);
+                  return (
+                    <div key={i} className="w-44 flex-none">
                       <DayColumn
-                        key={chunkStart + i}
-                        label={DAY_LABELS[chunkStart + i]}
+                        label={DAY_LABELS[i]}
                         date={date}
-                        tasks={visibleTasks.filter(
-                          (t) => t.date.slice(0, 10) === dateStr,
+                        tasks={datedVisibleTasks.filter(
+                          (t) => t.date!.slice(0, 10) === dateStr,
                         )}
-                        teamTasks={teamTasks.filter(
-                          (t) => t.date.slice(0, 10) === dateStr,
+                        teamTasks={datedTeamTasks.filter(
+                          (t) => t.date!.slice(0, 10) === dateStr,
                         )}
                         categories={categories}
                         onTaskCreated={handleTaskCreated}
@@ -552,16 +513,16 @@ export default function WeekView({
                         onSeriesUpdated={handleSeriesUpdated}
                         onCategoryCreated={handleCategoryCreated}
                       />
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })()}
+            </div>
+          </div>
 
-          {/* Desktop: 7-column grid (2xl+) */}
+          {/* Desktop: 7-column grid (xl+) */}
           <div
-            className={`hidden 2xl:grid grid-cols-7 gap-3 transition-opacity ${fetching ? "opacity-50" : "opacity-100"}`}
+            className={`hidden xl:grid grid-cols-7 gap-3 transition-opacity ${fetching ? "opacity-50" : "opacity-100"}`}
           >
             {days.map((date, i) => {
               const dateStr = date.toISOString().slice(0, 10);
@@ -570,11 +531,11 @@ export default function WeekView({
                   key={i}
                   label={DAY_LABELS[i]}
                   date={date}
-                  tasks={visibleTasks.filter(
-                    (t) => t.date.slice(0, 10) === dateStr,
+                  tasks={datedVisibleTasks.filter(
+                    (t) => t.date!.slice(0, 10) === dateStr,
                   )}
-                  teamTasks={teamTasks.filter(
-                    (t) => t.date.slice(0, 10) === dateStr,
+                  teamTasks={datedTeamTasks.filter(
+                    (t) => t.date!.slice(0, 10) === dateStr,
                   )}
                   categories={categories}
                   onTaskCreated={handleTaskCreated}

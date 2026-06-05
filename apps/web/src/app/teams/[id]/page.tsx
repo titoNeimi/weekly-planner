@@ -45,6 +45,7 @@ export default async function TeamDetailPage({
           team={{
             id: team.id,
             name: team.name,
+            discordGuildId: team.discordGuildId ?? null,
             members: team.members.map((m) => ({
               id: m.id,
               userId: m.userId,

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { RefreshCcw } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function RecurringActionDialog({
   action,
@@ -14,6 +15,8 @@ export default function RecurringActionDialog({
   onAll: () => void;
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -35,21 +38,19 @@ export default function RecurringActionDialog({
         <div className="mb-1 flex items-center gap-2">
           <RefreshCcw size={13} className="text-gray-400" />
           <h2 className="text-sm font-semibold text-gray-900">
-            Recurring task
+            {t("recurring_title")}
           </h2>
         </div>
         <p className="mb-5 text-xs text-gray-500">
-          {action === "edit"
-            ? "Do you want to edit just this occurrence or all future occurrences?"
-            : "Do you want to delete just this occurrence or cancel the entire series?"}
+          {action === "edit" ? t("recurring_edit_q") : t("recurring_delete_q")}
         </p>
         <div className="flex flex-col gap-2">
           <button
             onClick={onThisOne}
             className="rounded-lg border border-gray-200 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition"
           >
-            <span className="font-medium">This occurrence</span>
-            <span className="ml-1.5 text-gray-400">— only this one</span>
+            <span className="font-medium">{t("recurring_this")}</span>
+            <span className="ml-1.5 text-gray-400">{t("recurring_this_note")}</span>
           </button>
           <button
             onClick={onAll}
@@ -60,19 +61,19 @@ export default function RecurringActionDialog({
             }`}
           >
             <span className="font-medium">
-              {action === "edit" ? "All occurrences" : "Cancel series"}
+              {action === "edit" ? t("recurring_all") : t("recurring_cancel_series")}
             </span>
             <span
               className={`ml-1.5 ${action === "delete" ? "text-red-300" : "text-gray-400"}`}
             >
-              — affects all future tasks
+              {t("recurring_all_note")}
             </span>
           </button>
           <button
             onClick={onClose}
             className="mt-1 rounded-lg px-4 py-2 text-center text-sm text-gray-400 hover:bg-gray-50 transition"
           >
-            Cancel
+            {t("cancel")}
           </button>
         </div>
       </div>

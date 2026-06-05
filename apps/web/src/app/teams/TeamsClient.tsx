@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Users, Plus, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 type TeamListItem = {
   id: string;
@@ -31,6 +32,7 @@ export default function TeamsClient({ teams }: { teams: TeamListItem[] }) {
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
+  const { t, tpl } = useLanguage();
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -54,28 +56,26 @@ export default function TeamsClient({ teams }: { teams: TeamListItem[] }) {
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Teams</h1>
+        <h1 className="text-xl font-semibold text-gray-900">{t("teams_title")}</h1>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-gray-700"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition hover:bg-primary-hover"
         >
           <Plus className="h-4 w-4" />
-          New Team
+          {t("teams_new")}
         </button>
       </div>
 
       {teams.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-sm">
           <Users className="h-10 w-10 text-gray-300" />
-          <p className="text-sm font-medium text-gray-900">No teams yet</p>
-          <p className="text-sm text-gray-500">
-            Create a team to collaborate with others.
-          </p>
+          <p className="text-sm font-medium text-gray-900">{t("teams_none")}</p>
+          <p className="text-sm text-gray-500">{t("teams_none_subtitle")}</p>
           <button
             onClick={() => setShowCreate(true)}
-            className="mt-1 cursor-pointer rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700"
+            className="mt-1 cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-hover"
           >
-            Create team
+            {t("teams_create")}
           </button>
         </div>
       ) : (
@@ -91,11 +91,12 @@ export default function TeamsClient({ teams }: { teams: TeamListItem[] }) {
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {team.name}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900">{team.name}</p>
                   <p className="text-xs text-gray-500">
-                    {team.memberCount} member{team.memberCount !== 1 ? "s" : ""}
+                    {tpl("teams_members", {
+                      n: team.memberCount,
+                      s: team.memberCount !== 1 ? "s" : "",
+                    })}
                   </p>
                 </div>
               </div>
@@ -123,18 +124,18 @@ export default function TeamsClient({ teams }: { teams: TeamListItem[] }) {
         >
           <div className="w-full max-w-sm rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
             <h2 className="mb-4 text-base font-semibold text-gray-900">
-              Create team
+              {t("teams_create")}
             </h2>
             <form onSubmit={handleCreate} className="flex flex-col gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Team name
+                  {t("teams_name_label")}
                 </label>
                 <input
                   autoFocus
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Product team"
+                  placeholder={t("teams_name_placeholder")}
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
                 />
               </div>
@@ -144,14 +145,14 @@ export default function TeamsClient({ teams }: { teams: TeamListItem[] }) {
                   onClick={() => setShowCreate(false)}
                   className="flex-1 cursor-pointer rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={!name.trim() || creating}
-                  className="flex-1 cursor-pointer rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-50"
+                  className="flex-1 cursor-pointer rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white transition hover:bg-primary-hover disabled:opacity-50"
                 >
-                  {creating ? "Creating…" : "Create"}
+                  {creating ? t("creating") : t("create")}
                 </button>
               </div>
             </form>

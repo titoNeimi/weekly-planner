@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, CalendarDays } from "lucide-react";
 import type { SerializedTask, SerializedCategory } from "./WeekView";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
 import { VIRTUAL_ID_PREFIX } from "@/lib/recurring-tasks";
+import { stripMarkdown } from "@/lib/strip-markdown";
 import { RefreshCcw } from "lucide-react";
 import EditTaskModal from "./EditTaskModal";
 import EditSeriesModal from "./EditSeriesModal";
 import TaskDetailModal from "./TaskDetailModal";
 import RecurringActionDialog from "./RecurringActionDialog";
+import TaskContextMenu from "./TaskContextMenu";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function TaskItem({
   task,
@@ -20,6 +23,7 @@ export default function TaskItem({
   onUpdated,
   onDeleted,
   onReplaced,
+  onCreated,
   onSeriesDeleted,
   onSeriesUpdated,
 }: {
@@ -29,6 +33,7 @@ export default function TaskItem({
   onUpdated: (task: SerializedTask) => void;
   onDeleted: (id: string) => void;
   onReplaced: (oldId: string, task: SerializedTask) => void;
+  onCreated: (task: SerializedTask) => void;
   onSeriesDeleted: (recurringTaskId: string) => void;
   onSeriesUpdated: (
     recurringTaskId: string,
@@ -44,6 +49,8 @@ export default function TaskItem({
   const [recurringDialog, setRecurringDialog] = useState<
     "edit" | "delete" | null
   >(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const { t } = useLanguage();
 
   const isVirtual = task.id.startsWith(VIRTUAL_ID_PREFIX);
 
@@ -77,8 +84,7 @@ export default function TaskItem({
     setEditOpen(true);
   }
 
-  function handleDeleteClick(e: React.MouseEvent) {
-    e.stopPropagation();
+  function triggerDelete() {
     if (isVirtual) {
       setRecurringDialog("delete");
       return;
@@ -86,17 +92,22 @@ export default function TaskItem({
     handleDeleteConfirmed();
   }
 
+  function handleDeleteClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    triggerDelete();
+  }
+
   async function handleDeleteConfirmed() {
     onDeleted(task.id);
     await fetch(`/api/task/${task.id}`, { method: "DELETE" });
-    toast.success("Task deleted");
+    toast.success(t("task_deleted"));
   }
 
   async function handleDeleteThisOne() {
     setRecurringDialog(null);
     onDeleted(task.id);
     await fetch(`/api/task/${task.id}`, { method: "DELETE" });
-    toast.success("Occurrence deleted");
+    toast.success(t("task_occurrence_deleted"));
   }
 
   async function handleDeleteAll() {
@@ -106,7 +117,27 @@ export default function TaskItem({
     await fetch(`/api/recurring-task/${task.recurringTaskId}`, {
       method: "DELETE",
     });
-    toast.success("Recurring task cancelled");
+    toast.success(t("task_series_cancelled"));
+  }
+
+  async function handleDuplicate() {
+    if (!task.date) return;
+    const dateStr = task.date.slice(0, 10);
+    const timeStr = task.date.slice(11, 16);
+    const res = await fetch("/api/task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: task.title,
+        categoryId: task.categoryId,
+        notes: task.notes,
+        date: dateStr,
+        time: timeStr,
+      }),
+    });
+    const newTask: SerializedTask = await res.json();
+    onCreated(newTask);
+    toast.success(t("task_duplicated"));
   }
 
   function handleEditSaved(updatedTask: SerializedTask) {
@@ -126,43 +157,70 @@ export default function TaskItem({
   return (
     <div
       onClick={() => setDetailOpen(true)}
-      className={`group cursor-pointer rounded-lg border px-3 py-2 transition ${
-        task.done
-          ? "border-gray-100 bg-gray-50"
-          : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({ x: e.clientX, y: e.clientY });
+      }}
+      className={`group cursor-pointer rounded-lg border px-3 py-2.5 transition ${
+        task.isEvent
+          ? "border-amber-200 bg-amber-50 hover:border-amber-300 hover:shadow-sm"
+          : task.done
+            ? "border-gray-100 bg-gray-50"
+            : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
       }`}
     >
       <div className="flex items-start gap-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggle();
-          }}
-          aria-label={task.done ? "Mark incomplete" : "Mark complete"}
-          className={`mt-0.5 h-4 w-4 shrink-0 rounded border transition ${
-            task.done
-              ? "border-gray-300 bg-gray-300"
-              : "border-gray-300 bg-white hover:border-gray-500"
-          }`}
-        />
+        {task.isEvent ? (
+          <CalendarDays
+            size={14}
+            className="mt-0.5 shrink-0 text-amber-500"
+            aria-hidden="true"
+          />
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggle();
+            }}
+            aria-label={task.done ? t("task_mark_incomplete") : t("task_mark_complete")}
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
+              task.done
+                ? "border-primary bg-primary"
+                : "border-gray-200 bg-white hover:border-primary"
+            }`}
+          >
+            {task.done && (
+              <svg width="8" height="6" viewBox="0 0 8 6" fill="none" aria-hidden="true">
+                <path d="M1 3l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+        )}
         <div className="min-w-0 flex-1">
           <p
             className={`text-sm font-medium leading-snug wrap-break-word ${
-              task.done ? "line-through text-gray-300" : "text-gray-800"
+              task.done && !task.isEvent ? "line-through text-gray-300" : "text-gray-800"
             }`}
           >
             {task.title}
           </p>
           {task.notes && (
             <p
-              className={`mt-1 text-xs leading-relaxed wrap-break-word ${
-                task.done ? "text-gray-300" : "text-gray-400"
+              className={`mt-1 line-clamp-2 text-xs leading-relaxed ${
+                task.done && !task.isEvent ? "text-gray-300" : "text-gray-400"
               }`}
             >
-              {task.notes}
+              {stripMarkdown(task.notes)}
             </p>
           )}
           <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {task.isEvent && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                <CalendarDays size={8} />
+                {t("task_event")}
+              </span>
+            )}
             {task.category && categoryBadgeClass && (
               <span
                 className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${categoryBadgeClass}`}
@@ -173,7 +231,7 @@ export default function TaskItem({
             {task.recurringTaskId && (
               <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
                 <RefreshCcw size={8} />
-                Recurring
+                {t("task_recurring")}
               </span>
             )}
           </div>
@@ -184,14 +242,14 @@ export default function TaskItem({
               e.stopPropagation();
               handleEditClick();
             }}
-            aria-label="Edit task"
+            aria-label={t("task_edit")}
             className="text-gray-300 hover:text-gray-500 transition"
           >
             <Pencil size={13} />
           </button>
           <button
             onClick={handleDeleteClick}
-            aria-label="Delete task"
+            aria-label={t("task_delete")}
             className="text-gray-300 hover:text-red-400 transition"
           >
             <Trash2 size={13} />
@@ -205,6 +263,7 @@ export default function TaskItem({
           onClose={() => setDetailOpen(false)}
           onEdit={handleEditClick}
           onToggle={handleToggle}
+          onSaved={onUpdated}
         />
       )}
 
@@ -248,6 +307,16 @@ export default function TaskItem({
           onSaved={(recurringTaskId, changes) => {
             onSeriesUpdated(recurringTaskId, changes);
           }}
+        />
+      )}
+
+      {contextMenu && (
+        <TaskContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onDuplicate={handleDuplicate}
+          onDelete={triggerDelete}
+          onClose={() => setContextMenu(null)}
         />
       )}
     </div>
