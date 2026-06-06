@@ -28,13 +28,21 @@ export async function GET(
 
   if (!team) return Response.json({ error: "Forbidden" }, { status: 403 });
 
+  if (!process.env.DISCORD_TOKEN) {
+    console.error("[discord/channels] DISCORD_TOKEN env var is not set");
+    return Response.json({ error: "Discord not configured" }, { status: 502 });
+  }
+
   const res = await fetch(
     `https://discord.com/api/v10/guilds/${guildId}/channels`,
     { headers: { Authorization: `Bot ${process.env.DISCORD_TOKEN}` } },
   );
 
-  if (!res.ok)
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[discord/channels] Discord API ${res.status}: ${body}`);
     return Response.json({ error: "Failed to fetch channels" }, { status: 502 });
+  }
 
   const raw: RawChannel[] = await res.json();
 

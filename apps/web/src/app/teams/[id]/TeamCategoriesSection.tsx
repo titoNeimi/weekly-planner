@@ -183,8 +183,8 @@ export default function TeamCategoriesSection({
     if (!discordGuildId) return;
     setLoadingChannels(true);
     fetch(`/api/discord/${discordGuildId}/channels`)
-      .then((r) => r.json())
-      .then(setChannels)
+      .then((r) => (r.ok ? r.json() : Promise.resolve([])))
+      .then((data) => setChannels(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoadingChannels(false));
   }, [discordGuildId]);
