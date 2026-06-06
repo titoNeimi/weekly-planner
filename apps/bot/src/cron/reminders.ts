@@ -23,7 +23,7 @@ async function fetchDueTasks(): Promise<DueTask[]> {
 }
 
 export function startReminderCron() {
-  schedule("* * * * *", async () => {
+  schedule("*/30 * * * *", async () => {
     try {
       const tasks = await fetchDueTasks();
       if (tasks.length === 0) return;
@@ -45,13 +45,15 @@ export function startReminderCron() {
         if (!channel || !(channel instanceof TextChannel)) continue;
 
         const lines = channelTasks.map((task) => {
-          const deadline = task.date.toLocaleDateString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+          const deadline = task.date
+            ? task.date.toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "no date";
           const assignee = task.assignedTo?.profile.name ?? "Unassigned";
           return `• **${task.title}** — due ${deadline} (${assignee})`;
         });
