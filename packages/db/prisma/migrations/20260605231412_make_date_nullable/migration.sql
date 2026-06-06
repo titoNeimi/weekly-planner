@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Task" ALTER COLUMN "date" DROP NOT NULL;
+
+-- AlterTable
+ALTER TABLE "TeamTask" ALTER COLUMN "date" DROP NOT NULL;

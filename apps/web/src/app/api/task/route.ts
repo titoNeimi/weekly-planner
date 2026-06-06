@@ -49,13 +49,13 @@ export async function POST(request: NextRequest) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { title, categoryId, notes, date, time, recurringTask } = body;
+  const { title, categoryId, notes, date, time, recurringTask, isEvent } = body;
 
-  if (!title?.trim() || !date) {
+  if (!title?.trim()) {
     return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const taskDate = new Date(`${date}T${time ?? "00:00"}:00.000Z`);
+  const taskDate = date ? new Date(`${date}T${time ?? "00:00"}:00.000Z`) : null;
 
   if (!recurringTask) {
     const task = await prisma.task.create({
@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
         notes: notes?.trim() || null,
         date: taskDate,
         userId: user.id,
+        isEvent: Boolean(isEvent),
       },
       include: { category: { select: { id: true, name: true, color: true } } },
     });
@@ -72,6 +73,13 @@ export async function POST(request: NextRequest) {
   }
 
   const { type, interval, endDate, endCount } = recurringTask;
+
+  if (!taskDate) {
+    return Response.json(
+      { error: "Recurring tasks require a date" },
+      { status: 400 },
+    );
+  }
 
   if (!type || !interval || interval < 1) {
     return Response.json(
@@ -107,6 +115,7 @@ export async function POST(request: NextRequest) {
       endCount: endCount ?? null,
       categoryId: categoryId || null,
       notes: notes?.trim() || null,
+      isEvent: Boolean(isEvent),
     },
     include: { category: { select: { id: true, name: true, color: true } } },
   });
@@ -120,6 +129,7 @@ export async function POST(request: NextRequest) {
       category: recurring.category,
       notes: recurring.notes,
       done: false,
+      isEvent: recurring.isEvent,
       date: taskDate.toISOString(),
       userId: user.id,
       recurringTaskId: recurring.id,

@@ -1,5 +1,23 @@
 {
   "name": "@weekly-planner/bot",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "deploy": "tsx src/scripts/deploy.ts"
+  },
+  "dependencies": {
+    "@weekly-planner/db": "*",
+    "discord.js": "^14.18.0",
+    "dotenv": "^17.4.1",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  }
 }

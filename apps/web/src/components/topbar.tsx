@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Avatar from "@/components/avatar";
 import NavLinks from "@/components/nav-links";
+import SignInLink from "@/components/sign-in-link";
+import LangToggle from "@/components/lang-toggle";
+import SignOutButton from "@/components/sign-out-button";
 
 async function signOut() {
   "use server";
@@ -42,19 +45,11 @@ export default async function Topbar() {
                 {user.user_metadata.full_name ?? user.email}
               </span>
             </div>
-            <form action={signOut}>
-              <button className="rounded-md px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition cursor-pointer">
-                Sign out
-              </button>
-            </form>
+            <LangToggle />
+            <SignOutButton action={signOut} />
           </div>
         ) : (
-          <Link
-            href="/login"
-            className="rounded-md bg-gray-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-700 transition"
-          >
-            Sign in
-          </Link>
+          <SignInLink />
         )}
       </div>
     </header>

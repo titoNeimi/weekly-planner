@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import type { SerializedCategory } from "@/app/dashboard/WeekView";
 import { SWATCH_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
+import { useLanguage } from "@/context/LanguageContext";
 
 const NEW_OPTION = "__new__";
 
@@ -22,6 +23,7 @@ export default function CategorySelect({
   showNewOption = false,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function CategorySelect({
               <span className="truncate text-gray-800">{selected.name}</span>
             </>
           ) : (
-            <span className="text-gray-400">No category</span>
+            <span className="text-gray-400">{t("cat_no_category")}</span>
           )}
         </span>
         <ChevronDown
@@ -74,7 +76,10 @@ export default function CategorySelect({
       </button>
 
       {open && (
-        <ul className="absolute z-50 mt-1 w-full rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
+        <ul
+          onMouseDown={(e) => e.stopPropagation()}
+          className="absolute z-[9999] mt-1 w-full rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
+        >
           <li>
             <button
               type="button"
@@ -86,7 +91,7 @@ export default function CategorySelect({
               }`}
             >
               <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-gray-300" />
-              No category
+              {t("cat_no_category")}
             </button>
           </li>
           {categories.map((c) => (
@@ -112,7 +117,7 @@ export default function CategorySelect({
                 onClick={() => handleSelect(NEW_OPTION)}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition border-t border-gray-100 mt-1"
               >
-                + New category…
+                {t("cat_new")}
               </button>
             </li>
           )}

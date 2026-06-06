@@ -19,7 +19,8 @@ model Task {
   category        Category?      @relation(fields: [categoryId], references: [id])
   notes           String?
   done            Boolean        @default(false)
-  date            DateTime
+  isEvent         Boolean        @default(false)
+  date            DateTime?
   userId          String
   recurringTaskId String?
   recurringTask   RecurringTask? @relation(fields: [recurringTaskId], references: [id])
@@ -39,6 +40,7 @@ model RecurringTask {
   categoryId         String?
   category           Category?     @relation(fields: [categoryId], references: [id])
   notes              String?
+  isEvent            Boolean       @default(false)
   deletedOccurrences DateTime[]
   tasks              Task[]
   createdAt          DateTime      @default(now())
@@ -53,23 +55,25 @@ enum RecurringType {
 }
 
 model Team {
-  id          String       @id @default(cuid())
-  name        String
-  members     TeamMember[]
-  invitations Invitation[]
-  teamTasks   TeamTask[]
-  createdAt   DateTime     @default(now())
+  id             String         @id @default(cuid())
+  name           String
+  discordGuildId String?
+  members        TeamMember[]
+  invitations    Invitation[]
+  teamTasks      TeamTask[]
+  categories     TeamCategory[]
+  createdAt      DateTime       @default(now())
 }
 
 model TeamMember {
-  id       String   @id @default(cuid())
-  teamId   String
-  team     Team     @relation(fields: [teamId], references: [id])
-  userId   String
-  profile  Profile  @relation(fields: [userId], references: [userId])
-  assignedTasks TeamTask[]
-  role     TeamRole @default(USER)
-  joinedAt DateTime @default(now())
+  id              String        @id @default(cuid())
+  teamId          String
+  team            Team          @relation(fields: [teamId], references: [id])
+  userId          String
+  profile         Profile       @relation(fields: [userId], references: [userId])
+  assignedTasks   TeamTask[]
+  role            TeamRole      @default(USER)
+  joinedAt        DateTime      @default(now())
 }
 
 enum TeamRole {
@@ -79,18 +83,36 @@ enum TeamRole {
 }
 
 model TeamTask {
-  id              String      @id @default(cuid())
+  id              String        @id @default(cuid())
   title           String
   notes           String?
-  date            DateTime
-  done            Boolean     @default(false)
+  done            Boolean       @default(false)
+  isEvent         Boolean       @default(false)
+  date            DateTime?
   teamId          String
-  team            Team        @relation(fields: [teamId], references: [id])
+  team            Team          @relation(fields: [teamId], references: [id])
+  teamCategoryId  String?
+  teamCategory    TeamCategory? @relation(fields: [teamCategoryId], references: [id])
   assignedToId    String?
-  assignedTo      TeamMember? @relation(fields: [assignedToId], references: [id])
+  assignedTo      TeamMember?   @relation(fields: [assignedToId], references: [id])
   createdByUserId String
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  reminderSentAt  DateTime?
+  reminderAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([done, reminderSentAt, reminderAt])
+}
+
+model TeamCategory {
+  id              String        @id @default(cuid())
+  name            String
+  color           String
+  tasks           TeamTask[]
+  teamId          String
+  team            Team          @relation(fields:[teamId], references:[id])
+  discordChannel  String?
+  reminderHours   Int?
 }
 
 model Invitation {

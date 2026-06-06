@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { computeReminderAt } from "@/lib/reminder";
 import { createClient } from "@/lib/supabase/server";
 import { getTeamMember } from "@/lib/team-auth";
 import { NextRequest } from "next/server";
@@ -46,20 +47,28 @@ export async function POST(
     return Response.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await request.json();
-  const { title, notes, date, assignedToId } = body;
+  const { title, notes, date, assignedToId, teamCategoryId, isEvent } = body;
 
-  if (!title?.trim() || !date) {
+  if (!title?.trim()) {
     return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  const category = teamCategoryId
+    ? await prisma.teamCategory.findUnique({ where: { id: teamCategoryId } })
+    : null;
+
+  const taskDate = date ? new Date(date) : null;
   const task = await prisma.teamTask.create({
     data: {
       title: title.trim(),
       notes: notes ?? null,
-      date: new Date(date),
+      date: taskDate,
       teamId: id,
       assignedToId: assignedToId ?? null,
+      teamCategoryId: teamCategoryId ?? null,
       createdByUserId: user.id,
+      isEvent: Boolean(isEvent),
+      reminderAt: taskDate ? computeReminderAt(taskDate, category?.reminderHours) : null,
     },
   });
 

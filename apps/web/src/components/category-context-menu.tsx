@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SerializedCategory } from "@/app/dashboard/WeekView";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 type Props = {
   category: SerializedCategory;
@@ -24,6 +25,7 @@ export default function CategoryContextMenu({
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(category.name);
   const [saving, setSaving] = useState(false);
+  const { t } = useLanguage();
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -63,7 +65,7 @@ export default function CategoryContextMenu({
     setSaving(false);
     onRenamed(category.id, trimmed);
     onClose();
-    toast.success("Category renamed");
+    toast.success(t("cat_renamed"));
   }
 
   async function handleDelete() {
@@ -95,7 +97,7 @@ export default function CategoryContextMenu({
             onClick={handleRename}
             className="shrink-0 rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition"
           >
-            {saving ? "…" : "OK"}
+            {saving ? "…" : t("ok")}
           </button>
         </div>
       ) : (
@@ -104,13 +106,13 @@ export default function CategoryContextMenu({
             onClick={() => setRenaming(true)}
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
           >
-            Rename
+            {t("cat_rename")}
           </button>
           <button
             onClick={handleDelete}
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition"
           >
-            Remove
+            {t("cat_remove")}
           </button>
         </>
       )}

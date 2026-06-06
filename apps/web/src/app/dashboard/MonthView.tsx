@@ -8,28 +8,14 @@ import type { CategoryColor } from "@/lib/category-colors";
 import AddTaskModal from "./AddTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
+import { stripMarkdown } from "@/lib/strip-markdown";
 import { toast } from "sonner";
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAY_LABELS_SHORT = ["M", "T", "W", "T", "F", "S", "S"];
+import { getLocalTodayStr } from "@/lib/date";
+import { useLanguage } from "@/context/LanguageContext";
 
 function getCurrentMonthStart(): Date {
   const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
 }
 
 function getMonthCells(monthStart: Date): Date[] {
@@ -62,6 +48,11 @@ export default function MonthView({
   activeCategoryId: string | null;
   onCategoryCreated: (category: SerializedCategory) => void;
 }) {
+  const { t, ta } = useLanguage();
+  const DAY_LABELS = ta("days_short");
+  const DAY_LABELS_SHORT = ta("days_letter");
+  const MONTH_NAMES = ta("months");
+
   const [monthStart, setMonthStart] = useState(getCurrentMonthStart);
   const [tasks, setTasks] = useState<SerializedTask[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -97,7 +88,7 @@ export default function MonthView({
   async function handleDelete(id: string) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
     await fetch(`/api/task/${id}`, { method: "DELETE" });
-    toast.success("Task deleted");
+    toast.success(t("task_deleted"));
   }
 
   async function navigate(direction: number) {
@@ -114,7 +105,7 @@ export default function MonthView({
 
   const cells = getMonthCells(monthStart);
   const currentMonth = monthStart.getUTCMonth();
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalTodayStr();
 
   const visibleTasks = activeCategoryId
     ? tasks.filter((t) => t.categoryId === activeCategoryId)
@@ -134,7 +125,7 @@ export default function MonthView({
             onClick={() => navigate(-1)}
             disabled={fetching}
             className="rounded-lg border border-gray-200 p-1.5 text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
-            aria-label="Previous month"
+            aria-label={t("month_prev")}
           >
             <ChevronLeft size={16} />
           </button>
@@ -142,7 +133,7 @@ export default function MonthView({
             onClick={() => navigate(1)}
             disabled={fetching}
             className="rounded-lg border border-gray-200 p-1.5 text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
-            aria-label="Next month"
+            aria-label={t("month_next")}
           >
             <ChevronRight size={16} />
           </button>
@@ -168,7 +159,7 @@ export default function MonthView({
           const isCurrentMonth = date.getUTCMonth() === currentMonth;
           const isToday = dateStr === todayStr;
           const dayTasks = visibleTasks.filter(
-            (t) => t.date.slice(0, 10) === dateStr,
+            (t) => t.date !== null && t.date.slice(0, 10) === dateStr,
           );
           const shownTasks = dayTasks.slice(0, 3);
           const overflow = dayTasks.length - shownTasks.length;
@@ -185,7 +176,7 @@ export default function MonthView({
               <span
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
                   isToday
-                    ? "bg-gray-900 text-white"
+                    ? "bg-primary text-white"
                     : isCurrentMonth
                       ? "text-gray-700"
                       : "text-gray-300"
@@ -228,7 +219,7 @@ export default function MonthView({
                       </p>
                       {task.notes && (
                         <p className="truncate text-[10px] text-gray-400">
-                          {task.notes}
+                          {stripMarkdown(task.notes)}
                         </p>
                       )}
                     </div>
@@ -238,7 +229,7 @@ export default function MonthView({
                           e.stopPropagation();
                           setEditTask(task);
                         }}
-                        aria-label="Edit task"
+                        aria-label={t("task_edit")}
                         className="text-gray-300 hover:text-gray-500 transition"
                       >
                         <Pencil size={13} />
@@ -248,7 +239,7 @@ export default function MonthView({
                           e.stopPropagation();
                           handleDelete(task.id);
                         }}
-                        aria-label="Delete task"
+                        aria-label={t("task_delete")}
                         className="text-gray-300 hover:text-red-400 transition"
                       >
                         <Trash2 size={13} />
@@ -271,7 +262,7 @@ export default function MonthView({
                 }}
                 className="mt-auto w-full rounded py-0.5 pl-1 text-left text-xs text-gray-300 opacity-0 hover:text-gray-500 transition group-hover:opacity-100"
               >
-                + add task
+                {t("month_add_task")}
               </button>
             </div>
           );
@@ -310,6 +301,12 @@ export default function MonthView({
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ done: newDone }),
             });
+          }}
+          onSaved={(updated) => {
+            setDetailTask(updated);
+            setTasks((prev) =>
+              prev.map((t) => (t.id === updated.id ? updated : t)),
+            );
           }}
         />
       )}

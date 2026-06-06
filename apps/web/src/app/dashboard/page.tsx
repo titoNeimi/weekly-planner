@@ -14,12 +14,16 @@ export default async function DashboardPage() {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
 
-  const [tasks, categories, recurringInstances, rawTeamTasks] =
+  const [allTasks, categories, recurringInstances, rawTeamTasks] =
     await Promise.all([
       prisma.task.findMany({
         where: {
           userId: user.id,
-          OR: [{ date: { gte: today } }, { date: { lt: today }, done: false }],
+          OR: [
+            { date: null, done: false },
+            { date: { gte: today } },
+            { date: { lt: today }, done: false, isEvent: false },
+          ],
         },
         include: {
           category: { select: { id: true, name: true, color: true } },
@@ -37,8 +41,9 @@ export default async function DashboardPage() {
             },
             {
               OR: [
+                { date: null, done: false },
                 { date: { gte: today } },
-                { AND: [{ date: { lt: today } }, { done: false }] },
+                { AND: [{ date: { lt: today } }, { done: false }, { isEvent: false }] },
               ],
             },
           ],
@@ -53,25 +58,42 @@ export default async function DashboardPage() {
       }),
     ]);
 
-  const allTasks = [...tasks, ...recurringInstances].sort(
+  // Undated tasks have no date; keep them separate from the recurring merge.
+  const undated = allTasks.filter((t) => t.date === null);
+  const dated = allTasks.filter((t) => t.date !== null) as Array<
+    (typeof allTasks)[0] & { date: Date }
+  >;
+
+  const datedWithRecurring = [...dated, ...recurringInstances].sort(
     (a, b) => a.date.getTime() - b.date.getTime(),
   );
 
+  const serializedTasks = [
+    ...datedWithRecurring.map((t) => ({
+      ...t,
+      date: t.date.toISOString(),
+      createdAt: t.createdAt.toISOString(),
+      updatedAt: t.updatedAt.toISOString(),
+    })),
+    ...undated.map((t) => ({
+      ...t,
+      date: null,
+      createdAt: t.createdAt.toISOString(),
+      updatedAt: t.updatedAt.toISOString(),
+    })),
+  ];
+
   return (
-    <main className="flex-1 bg-gray-50 px-3 py-4 sm:px-6 sm:py-8">
+    <main className="flex-1 bg-gray-50 px-4 py-6 sm:px-6 sm:py-8">
       <TaskOverview
-        tasks={allTasks.map((t) => ({
-          ...t,
-          date: t.date.toISOString(),
-          createdAt: t.createdAt.toISOString(),
-          updatedAt: t.updatedAt.toISOString(),
-        }))}
+        tasks={serializedTasks}
         teamTasks={rawTeamTasks.map((t) => ({
           id: t.id,
           title: t.title,
           notes: t.notes,
-          date: t.date.toISOString(),
+          date: t.date ? t.date.toISOString() : null,
           done: t.done,
+          isEvent: t.isEvent,
           teamId: t.teamId,
           teamName: t.team.name,
           assignedToName: t.assignedTo?.profile.name ?? null,

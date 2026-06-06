@@ -13,10 +13,14 @@ export async function PATCH(
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { name } = await request.json();
+  const body = await request.json();
+  const { name, discordGuildId } = body;
 
-  if (!name?.trim())
-    return Response.json({ error: "Missing required fields" }, { status: 400 });
+  if (name !== undefined && !name?.trim())
+    return Response.json({ error: "Name cannot be empty" }, { status: 400 });
+
+  if (name === undefined && !("discordGuildId" in body))
+    return Response.json({ error: "No fields to update" }, { status: 400 });
 
   const [profile, teamMember] = await Promise.all([
     getProfile(user.id),
@@ -30,7 +34,11 @@ export async function PATCH(
 
   if (!canUpdate) return Response.json({ error: "Forbidden" }, { status: 403 });
 
-  await prisma.team.update({ where: { id }, data: { name: name.trim() } });
+  const data: { name?: string; discordGuildId?: string | null } = {};
+  if (name !== undefined) data.name = name.trim();
+  if ("discordGuildId" in body) data.discordGuildId = discordGuildId ?? null;
+
+  await prisma.team.update({ where: { id }, data });
   return new Response(null, { status: 204 });
 }
 
@@ -83,6 +91,7 @@ export async function DELETE(
 
   await prisma.$transaction([
     prisma.teamTask.deleteMany({ where: { teamId: id } }),
+    prisma.teamCategory.deleteMany({ where: { teamId: id } }),
     prisma.invitation.deleteMany({ where: { teamId: id } }),
     prisma.teamMember.deleteMany({ where: { teamId: id } }),
     prisma.team.delete({ where: { id } }),

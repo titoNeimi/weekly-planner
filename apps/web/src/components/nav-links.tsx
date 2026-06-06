@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const LINKS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/agenda", label: "Agenda" },
-  { href: "/teams", label: "Teams" },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function NavLinks() {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const LINKS = [
+    { href: "/dashboard", label: t("nav_dashboard") },
+    { href: "/agenda", label: t("nav_agenda") },
+    { href: "/teams", label: t("nav_teams") },
+  ];
 
   return (
     <nav className="flex items-center gap-1">

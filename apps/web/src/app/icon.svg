@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>Weekly Planner</title>
+  <rect width="32" height="32" rx="7" fill="#197037"/>
+  <rect x="6"  y="16" width="2" height="10" rx="1" fill="white"/>
+  <rect x="9"  y="11" width="2" height="15" rx="1" fill="white"/>
+  <rect x="12" y="8"  width="2" height="18" rx="1" fill="white"/>
+  <rect x="15" y="10" width="2" height="16" rx="1" fill="white"/>
+  <rect x="18" y="14" width="2" height="12" rx="1" fill="white"/>
+  <rect x="21" y="19" width="2" height="7"  rx="1" fill="white" fill-opacity="0.5"/>
+  <rect x="24" y="21" width="2" height="5"  rx="1" fill="white" fill-opacity="0.5"/>
+</svg>

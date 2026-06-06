@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-04T00:00:00Z",
+  "title": "Design System: Weekly Planner",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Deep Sage",
+        "canonical": "oklch(0.480 0.120 150)",
+        "tonalRamp": [
+          "oklch(0.150 0.055 150)",
+          "oklch(0.250 0.085 150)",
+          "oklch(0.350 0.105 150)",
+          "oklch(0.480 0.120 150)",
+          "oklch(0.590 0.115 150)",
+          "oklch(0.700 0.090 150)",
+          "oklch(0.820 0.060 150)",
+          "oklch(0.940 0.030 150)"
+        ]
+      },
+      "primary-light": {
+        "role": "primary-surface",
+        "displayName": "Sage Light",
+        "canonical": "oklch(0.940 0.040 150)",
+        "tonalRamp": [
+          "oklch(0.480 0.120 150)",
+          "oklch(0.590 0.115 150)",
+          "oklch(0.670 0.090 150)",
+          "oklch(0.750 0.070 150)",
+          "oklch(0.820 0.055 150)",
+          "oklch(0.870 0.045 150)",
+          "oklch(0.910 0.042 150)",
+          "oklch(0.940 0.040 150)"
+        ]
+      },
+      "ink": {
+        "role": "ink",
+        "displayName": "Ink",
+        "canonical": "oklch(0.175 0.010 150)",
+        "tonalRamp": [
+          "oklch(0.100 0.007 150)",
+          "oklch(0.175 0.010 150)",
+          "oklch(0.280 0.008 150)",
+          "oklch(0.380 0.008 150)",
+          "oklch(0.445 0.008 150)",
+          "oklch(0.550 0.006 150)",
+          "oklch(0.640 0.005 150)",
+          "oklch(0.750 0.003 150)"
+        ]
+      },
+      "bg": {
+        "role": "background",
+        "displayName": "Page Ground",
+        "canonical": "oklch(0.978 0.000 0)",
+        "tonalRamp": [
+          "oklch(0.100 0.000 0)",
+          "oklch(0.250 0.000 0)",
+          "oklch(0.400 0.000 0)",
+          "oklch(0.550 0.000 0)",
+          "oklch(0.700 0.000 0)",
+          "oklch(0.840 0.000 0)",
+          "oklch(0.930 0.000 0)",
+          "oklch(0.978 0.000 0)"
+        ]
+      },
+      "surface": {
+        "role": "surface",
+        "displayName": "Surface White",
+        "canonical": "oklch(1.000 0.000 0)",
+        "tonalRamp": [
+          "oklch(0.700 0.000 0)",
+          "oklch(0.790 0.000 0)",
+          "oklch(0.860 0.000 0)",
+          "oklch(0.910 0.000 0)",
+          "oklch(0.945 0.000 0)",
+          "oklch(0.965 0.000 0)",
+          "oklch(0.982 0.000 0)",
+          "oklch(1.000 0.000 0)"
+        ]
+      },
+      "border": {
+        "role": "border",
+        "displayName": "Border",
+        "canonical": "oklch(0.918 0.003 150)",
+        "tonalRamp": [
+          "oklch(0.300 0.005 150)",
+          "oklch(0.450 0.004 150)",
+          "oklch(0.580 0.004 150)",
+          "oklch(0.690 0.004 150)",
+          "oklch(0.780 0.004 150)",
+          "oklch(0.855 0.003 150)",
+          "oklch(0.918 0.003 150)",
+          "oklch(0.960 0.002 150)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "heading": {
+        "displayName": "Heading",
+        "purpose": "Week date-range label above the grid. The most prominent element on the page."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Task titles in day columns. Primary reading size. Max 65ch in any prose context."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Task metadata, button text, modal field labels, navigation links."
+      },
+      "label-caps": {
+        "displayName": "Label Caps",
+        "purpose": "Day-of-week abbreviations (MON, TUE...) in column headers. Short labels only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "surface-lift",
+        "value": "0 1px 3px rgba(0,0,0,0.08)",
+        "purpose": "Today's day column only. The only card-level shadow in the system."
+      },
+      {
+        "name": "modal",
+        "value": "0 4px 24px rgba(0,0,0,0.12)",
+        "purpose": "Centered dialog surfaces floating above the backdrop overlay."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "0.15s ease-out",
+        "purpose": "Default for interactive state changes: hover, focus, active. Short because users are in flow."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px", "note": "Single-day mobile view below; 3-column tablet view from sm to 2xl." },
+      { "name": "2xl", "value": "1536px", "note": "7-column full week grid from 2xl and above." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action button. Deep sage fill, white text, 8px radius. Seeded direction — current implementation uses gray-900.",
+      "html": "<button class=\"ds-btn-primary\">Save task</button>",
+      "css": ".ds-btn-primary { background: oklch(0.480 0.120 150); color: #ffffff; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 500; font-family: system-ui, -apple-system, sans-serif; line-height: 1.4; letter-spacing: 0.01em; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-primary:hover { background: oklch(0.380 0.110 150); } .ds-btn-primary:focus-visible { outline: 2px solid oklch(0.480 0.120 150); outline-offset: 2px; background: oklch(0.380 0.110 150); } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action. Transparent bg, gray border, ink-secondary text.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: oklch(0.445 0.008 150); border: 1px solid oklch(0.918 0.003 150); border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; line-height: 1.4; cursor: pointer; transition: background 0.15s ease-out, color 0.15s ease-out, border-color 0.15s ease-out; } .ds-btn-ghost:hover { background: oklch(0.978 0.000 0); color: oklch(0.175 0.010 150); } .ds-btn-ghost:focus-visible { outline: 2px solid oklch(0.480 0.120 150); outline-offset: 2px; } .ds-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }"
+    },
+    {
+      "name": "Day Column (Today)",
+      "kind": "card",
+      "refersTo": null,
+      "description": "Signature component. Today variant with sage date circle, border-strong, and surface lift shadow.",
+      "html": "<div class=\"ds-day-column ds-day-column--today\"><div class=\"ds-day-column__header\"><span class=\"ds-day-column__label\">WED</span><span class=\"ds-day-column__date\">4</span></div><div class=\"ds-day-column__tasks\"></div><button class=\"ds-day-column__add\">+ add task</button></div>",
+      "css": ".ds-day-column { background: #ffffff; border: 1px solid oklch(0.918 0.003 150); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 12px; min-height: 120px; font-family: system-ui, -apple-system, sans-serif; } .ds-day-column--today { border-color: oklch(0.175 0.010 150); box-shadow: 0 1px 3px rgba(0,0,0,0.08); } .ds-day-column__header { display: flex; align-items: center; justify-content: space-between; } .ds-day-column__label { font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(0.640 0.005 150); } .ds-day-column--today .ds-day-column__label { color: oklch(0.175 0.010 150); } .ds-day-column__date { font-size: 0.875rem; color: oklch(0.640 0.005 150); font-variant-numeric: tabular-nums; } .ds-day-column--today .ds-day-column__date { width: 24px; height: 24px; background: oklch(0.480 0.120 150); color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; } .ds-day-column__tasks { flex: 1; display: flex; flex-direction: column; gap: 8px; } .ds-day-column__add { background: transparent; border: none; width: 100%; text-align: left; padding: 4px; font-size: 0.75rem; color: oklch(0.640 0.005 150); cursor: pointer; border-radius: 6px; transition: background 0.15s, color 0.15s; } .ds-day-column__add:hover { background: oklch(0.978 0.000 0); color: oklch(0.445 0.008 150); }"
+    },
+    {
+      "name": "Category Chip (Inactive)",
+      "kind": "chip",
+      "refersTo": "chip-inactive",
+      "description": "Filter chip in unselected state. Page-ground bg, ink-secondary text.",
+      "html": "<button class=\"ds-chip\">Work</button>",
+      "css": ".ds-chip { background: oklch(0.978 0.000 0); color: oklch(0.445 0.008 150); border: none; border-radius: 9999px; padding: 4px 12px; font-size: 0.75rem; font-weight: 500; font-family: system-ui, -apple-system, sans-serif; cursor: pointer; white-space: nowrap; transition: background 0.15s ease-out, color 0.15s ease-out; } .ds-chip:hover { background: oklch(0.940 0.004 150); color: oklch(0.175 0.010 150); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Text input. Sage-light glow on focus; ink-muted placeholder.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Task title\" />",
+      "css": ".ds-input { background: #ffffff; border: 1px solid oklch(0.918 0.003 150); border-radius: 8px; padding: 6px 12px; font-size: 0.875rem; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; color: oklch(0.175 0.010 150); outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out; } .ds-input::placeholder { color: oklch(0.640 0.005 150); } .ds-input:focus { border-color: oklch(0.445 0.008 150); box-shadow: 0 0 0 3px oklch(0.940 0.040 150); } .ds-input:disabled { background: oklch(0.978 0.000 0); border-color: oklch(0.950 0.001 150); opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "View Switcher",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Segmented control for Week/Month toggle. Active segment uses sage (seeded direction; currently gray-900).",
+      "html": "<div class=\"ds-view-switcher\"><button class=\"ds-view-switcher__btn ds-view-switcher__btn--active\">Week</button><button class=\"ds-view-switcher__btn\">Month</button></div>",
+      "css": ".ds-view-switcher { display: inline-flex; border: 1px solid oklch(0.918 0.003 150); border-radius: 8px; overflow: hidden; } .ds-view-switcher__btn { background: transparent; border: none; padding: 6px 12px; font-size: 0.875rem; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; color: oklch(0.640 0.005 150); cursor: pointer; transition: background 0.15s ease-out, color 0.15s ease-out; } .ds-view-switcher__btn:hover { background: oklch(0.978 0.000 0); color: oklch(0.445 0.008 150); } .ds-view-switcher__btn--active { background: oklch(0.480 0.120 150); color: #ffffff; } .ds-view-switcher__btn--active:hover { background: oklch(0.480 0.120 150); color: #ffffff; }"
+    },
+    {
+      "name": "Task Item",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "A single task row inside a day column. Checkbox, title, optional category chip.",
+      "html": "<div class=\"ds-task\"><input type=\"checkbox\" class=\"ds-task__check\" /><span class=\"ds-task__title\">Review pull request</span><span class=\"ds-task__cat\" style=\"background:oklch(0.900 0.060 230);color:oklch(0.350 0.090 230)\">Work</span></div>",
+      "css": ".ds-task { display: flex; align-items: center; gap: 8px; padding: 4px 4px; border-radius: 6px; cursor: pointer; transition: background 0.1s; } .ds-task:hover { background: oklch(0.978 0.000 0); } .ds-task__check { width: 14px; height: 14px; flex-shrink: 0; border: 1.5px solid oklch(0.640 0.005 150); border-radius: 3px; appearance: none; cursor: pointer; transition: background 0.1s, border-color 0.1s; } .ds-task__check:checked { background: oklch(0.480 0.120 150); border-color: oklch(0.480 0.120 150); } .ds-task__title { flex: 1; font-size: 0.875rem; font-weight: 400; color: oklch(0.175 0.010 150); font-family: system-ui, -apple-system, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-task--done .ds-task__title { color: oklch(0.640 0.005 150); text-decoration: line-through; } .ds-task__cat { flex-shrink: 0; border-radius: 9999px; padding: 2px 6px; font-size: 0.625rem; font-weight: 500; font-family: system-ui, -apple-system, sans-serif; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Good Tool",
+    "overview": "Weekly Planner is designed like a well-made implement: no unnecessary chrome, no decoration for its own sake, quality felt in use rather than announced. The interface disappears into the task. Open it, see your week, add what you need, close it. What stays in mind is the week's shape, not the software.\n\nThe visual system is restrained by design. A near-neutral palette keeps attention on the content (tasks, categories, dates), not the shell. The single brand accent — a deep sage, introduced as a directional seed — carries the product's personality without competing with the category colors users assign meaning to. Color earns its place here; it never decorates.\n\nThis system explicitly rejects document-editor complexity (Notion's layered blocks, inline commands, wiki nesting), enterprise task-management theatrics (ticket numbers, status badges, sprint boards), and the generic SaaS dashboard template (gray sidebar, blue primary, identical card grids). The user is planning their week over coffee, not managing a product roadmap.",
+    "keyCharacteristics": [
+      "Near-neutral field with one deliberate accent (deep sage)",
+      "Flat surfaces by default; depth reserved for state (today, modal, sticky nav)",
+      "System typeface now; humanist sans the intended direction",
+      "Category colors are user-owned; system palette stays out of their way",
+      "\"Quiet and firm\" interactive controls — present but not loud"
+    ],
+    "rules": [
+      {
+        "name": "The Neutral Field Rule",
+        "body": "The system palette is neutral-with-sage plus one accent. Category colors are user-owned. System chrome never competes with them. When a new system element needs color, exhaust neutral and sage before introducing anything else.",
+        "section": "colors"
+      },
+      {
+        "name": "The Today Rule",
+        "body": "The only card-level element that earns the border-strong treatment is today's day column. No other container uses a near-black full border as an accent. The singularity of the treatment is the meaning.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "No display typeface. No serif. One well-tuned sans at 400/500/600 carries every typographic role. Adding a second family adds complexity without adding warmth.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-by-Default Rule",
+        "body": "Surfaces are flat at rest. Elevation appears only as a response to state: today (singular), modals (above the page), sticky nav (above scroll). A new component reaching for a shadow for aesthetic reasons is wrong. Reach for a border or background tint instead.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Deep Sage (oklch(0.480 0.120 150)) as the sole system accent — today's indicator, primary buttons, focus rings, the active view-switcher segment. Its rarity is the point.",
+      "Do keep the surface field flat at rest. Border and background-tint carry hierarchy; shadows respond only to state.",
+      "Do preserve the user's color vocabulary. Category chips use user-assigned colors; system components use neutral + sage only.",
+      "Do treat today's day column as the only card-level elevated element. Its full border-strong treatment is singular.",
+      "Do use white text on any sage fill — it's a saturated mid-luminance surface and dark text reads as muddy.",
+      "Do keep interactive transitions at 150ms with ease-out. Users are in flow.",
+      "Do use Label Caps (uppercase, tracked) only on column headers and short badges. Never on sentences."
+    ],
+    "donts": [
+      "Don't make this feel like Notion: no block-based editing affordances, no slash-command menus, no page-within-page nesting.",
+      "Don't add enterprise PM patterns: no ticket numbers, no sprint-board columns, no priority-matrix labels, no project health status widgets.",
+      "Don't apply the generic SaaS dashboard template: no persistent left sidebar, no blue primary CTA, no identical-card grids.",
+      "Don't use border-left wider than 1px as a colored accent stripe on any card or list item. Side-stripe borders are never intentional here.",
+      "Don't use background-clip: text gradient effects. Text color is solid ink or solid white.",
+      "Don't introduce a second system accent color without a clear semantic role. The neutral stack plus one sage is the system.",
+      "Don't use ink-muted (oklch(0.640 0.005 150)) for body-size text. It may not reach 4.5:1 on white.",
+      "Don't add decorative motion or page-load choreography. State changes get 150ms transitions; the page loads into a task."
+    ]
+  }
+}

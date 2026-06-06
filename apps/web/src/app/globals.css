@@ -1,2 +1,21 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}
+
+@theme {
+  --color-primary: oklch(0.480 0.120 150);
+  --color-primary-hover: oklch(0.380 0.110 150);
+  --color-primary-light: oklch(0.940 0.040 150);
+  --animate-fade-in: fade-in 0.2s ease-out both;
+}

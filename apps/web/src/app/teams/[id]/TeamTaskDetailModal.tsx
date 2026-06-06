@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { Check, Pencil } from "lucide-react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
 import { toast } from "sonner";
 import Avatar from "@/components/avatar";
 import type { TeamTaskData } from "./TeamTaskModal";
+import { useLanguage } from "@/context/LanguageContext";
 
 type Assignee = { name: string | null; avatarUrl: string | null };
 
@@ -40,6 +42,7 @@ export default function TeamTaskDetailModal({
   onSaved: (task: TeamTaskData) => void;
 }) {
   const [notes, setNotes] = useState(task.notes ?? "");
+  const { t } = useLanguage();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -49,14 +52,14 @@ export default function TeamTaskDetailModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const dateLabel = new Date(
-    task.date.slice(0, 10) + "T00:00:00",
-  ).toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const dateLabel = task.date
+    ? new Date(task.date.slice(0, 10) + "T00:00:00").toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
 
   async function handleCheckboxToggle(index: number) {
     const updated = toggleNthCheckbox(notes, index);
@@ -189,7 +192,7 @@ export default function TeamTaskDetailModal({
           <div className="flex min-w-0 items-start gap-2">
             <div
               className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                task.done ? "bg-gray-300" : "bg-gray-800"
+                task.isEvent ? "bg-amber-400" : task.done ? "bg-gray-300" : "bg-gray-800"
               }`}
             />
             <h2
@@ -201,27 +204,29 @@ export default function TeamTaskDetailModal({
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <button
-              onClick={onToggle}
-              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition ${
-                task.done
-                  ? "border-gray-200 text-gray-400 hover:bg-gray-50"
-                  : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-              }`}
-            >
-              <Check size={11} />
-              {task.done ? "Undo" : "Done"}
-            </button>
+            {!task.isEvent && (
+              <button
+                onClick={onToggle}
+                className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition ${
+                  task.done
+                    ? "border-gray-200 text-gray-400 hover:bg-gray-50"
+                    : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                }`}
+              >
+                <Check size={11} />
+                {task.done ? t("team_task_detail_undo") : t("team_task_detail_done")}
+              </button>
+            )}
             <button
               onClick={onEdit}
               className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-600 transition hover:bg-gray-50"
             >
               <Pencil size={11} />
-              Edit
+              {t("team_task_detail_edit")}
             </button>
             <button
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t("close")}
               className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
             >
               ✕
@@ -231,14 +236,14 @@ export default function TeamTaskDetailModal({
 
         {/* Meta */}
         <div className="flex items-center gap-4 text-xs text-gray-500">
-          <span>{dateLabel}</span>
+          <span>{dateLabel ?? <span className="italic text-gray-400">{t("no_date")}</span>}</span>
           {assignee && (
             <div className="flex items-center gap-1.5">
               <Avatar
                 name={assignee.name ?? undefined}
                 avatarUrl={assignee.avatarUrl ?? undefined}
               />
-              <span>{assignee.name ?? "Unknown"}</span>
+              <span>{assignee.name ?? t("team_task_unknown")}</span>
             </div>
           )}
         </div>
@@ -250,7 +255,7 @@ export default function TeamTaskDetailModal({
             className="max-h-[60vh] overflow-y-auto rounded-lg bg-gray-50 px-4 py-3"
           >
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
+              remarkPlugins={[remarkGfm, remarkBreaks]}
               rehypePlugins={[rehypeHighlight]}
               components={components}
             >
@@ -258,7 +263,7 @@ export default function TeamTaskDetailModal({
             </ReactMarkdown>
           </div>
         ) : (
-          <p className="text-xs italic text-gray-400">No notes</p>
+          <p className="text-xs italic text-gray-400">{t("team_task_detail_no_notes")}</p>
         )}
       </div>
     </div>
