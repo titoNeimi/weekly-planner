@@ -20,6 +20,14 @@ const en = {
   // Topbar
   topbar_sign_out: "Sign out",
 
+  // Search
+  search_open: "Search",
+  search_placeholder: "Search tasks and notes…",
+  search_hint: "Type to search your tasks…",
+  search_loading: "Searching…",
+  search_no_results: "No matching tasks",
+  search_no_results_for: 'No results for "{q}"',
+
   // Common
   cancel: "Cancel",
   save: "Save",
@@ -29,6 +37,8 @@ const en = {
   close: "Close",
   ok: "OK",
   all: "All",
+  toast_undo: "Undo",
+  toast_undone: "Undone",
 
   // Task Overview
   overview_title: "Tasks",
@@ -38,14 +48,48 @@ const en = {
   overview_tomorrow: "Tomorrow",
   overview_nothing_planned: "Nothing planned yet.",
   overview_add_first: "Add your first task",
+  overview_filtered_empty: "No {category} tasks scheduled. Try another category or clear the filter.",
   overview_past: "Past",
   overview_overdue: "{n} overdue",
+  task_overdue_badge: "{n}d overdue",
+  past_mark_all_done: "Mark all done",
+  past_clear_all: "Clear all",
+  past_mark_all_done_success: "Marked {n} tasks done",
+  past_clear_all_confirm: "Delete {n} overdue tasks? This cannot be undone.",
+  past_clear_all_success: "Deleted {n} tasks",
+
+  // Today hero
+  hero_quick_add_placeholder: "Add a task for today…",
+  hero_add_button: "Add",
+  hero_task_count: "{n} tasks",
+  hero_empty_today: "Nothing planned for today.",
+  hero_empty_today_filtered: "No {category} tasks today.",
+  hero_quick_add_error: "Couldn't add that task. Try again.",
+  hero_tomorrow_button: "Add for tomorrow",
+
+  // Overdue banner
+  overdue_banner_message: "{n} tasks are overdue",
+  overdue_banner_action: "Move all to today",
+  overdue_banner_moving: "Moving…",
+  overdue_banner_success: "Moved {n} tasks to today",
+  overdue_banner_partial_error: "Couldn't move {n} of them — try again",
+
+  // Assigned to you (team tasks)
+  assigned_section_title: "Assigned to you",
+
+  // Week strip
+  weekstrip_go_to_day: "{n} tasks — open in agenda",
+
+  // Dashboard sidebar
+  sidebar_categories_title: "Categories",
+  sidebar_overdue_more: "+{n} more",
 
   // Week View
   week_prev: "Previous week",
   week_next: "Next week",
   week_today: "Today",
   week_view_week: "Week",
+  week_view_day: "Day",
   week_view_month: "Month",
   week_new_category: "+ Category",
   week_category_name_placeholder: "Category name",
@@ -54,7 +98,12 @@ const en = {
 
   // Day Column
   day_nothing_planned: "Nothing planned",
+  day_nothing_planned_today: "Nothing planned — enjoy the day.",
   day_add_task: "+ Add task",
+
+  // Day Timeline
+  timeline_title: "Timeline",
+  timeline_all_day: "All day",
 
   // Month View
   month_prev: "Previous month",
@@ -128,6 +177,14 @@ const en = {
   task_delete: "Delete task",
   task_duplicate: "Duplicate task",
   task_duplicated: "Task duplicated",
+  task_reschedule: "Reschedule",
+  task_reschedule_today: "Today",
+  task_reschedule_tomorrow: "Tomorrow",
+  task_reschedule_next_week: "Next week",
+  task_reschedule_back: "Back",
+  task_rescheduled: "Task rescheduled",
+  task_reschedule_error: "Couldn't reschedule — try again",
+  task_delete_error: "Couldn't delete — try again",
 
   // Recurring Dialog
   recurring_title: "Recurring task",
@@ -144,9 +201,14 @@ const en = {
   cat_new: "+ New category…",
   cat_rename: "Rename",
   cat_remove: "Remove",
+  cat_pin: "Pin",
+  cat_unpin: "Unpin",
   cat_renamed: "Category renamed",
   cat_deleted: "Category deleted",
   cat_created: "Category created",
+  cat_pinned: "Category pinned",
+  cat_unpinned: "Category unpinned",
+  cat_pin_error: "Couldn't update — try again",
 
   // Teams list
   teams_title: "Teams",
@@ -256,6 +318,21 @@ const en = {
   invite_retry: "Retry",
   invite_go_dashboard: "Go to Dashboard",
   invite_error_join: "Something went wrong. Please try again.",
+
+  // Settings
+  settings_title: "Settings",
+  settings_week_start: "Week starts on",
+  settings_monday: "Mon",
+  settings_sunday: "Sun",
+  settings_density: "Density",
+  settings_comfortable: "Comfortable",
+  settings_compact: "Compact",
+  settings_theme: "Theme",
+  settings_theme_light: "Light",
+  settings_theme_dark: "Dark",
+  settings_theme_system: "System",
+  settings_language: "Language",
+  account_menu_label: "Account menu",
 
   // Days (short, 1-letter, long)
   days_short: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],

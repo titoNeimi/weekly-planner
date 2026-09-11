@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2, CalendarDays } from "lucide-react";
+import { Pencil, Trash2, CalendarDays, Clock } from "lucide-react";
 import type { SerializedTask, SerializedCategory } from "./WeekView";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
 import { VIRTUAL_ID_PREFIX } from "@/lib/recurring-tasks";
 import { stripMarkdown } from "@/lib/strip-markdown";
+import { getLocalTodayStr } from "@/lib/date";
 import { RefreshCcw } from "lucide-react";
 import EditTaskModal from "./EditTaskModal";
 import EditSeriesModal from "./EditSeriesModal";
@@ -15,6 +16,8 @@ import RecurringActionDialog from "./RecurringActionDialog";
 import TaskContextMenu from "./TaskContextMenu";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
+import { useDensity } from "@/context/DensityContext";
+import { undoableAction } from "@/lib/undo-toast";
 
 export default function TaskItem({
   task,
@@ -50,9 +53,20 @@ export default function TaskItem({
     "edit" | "delete" | null
   >(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-  const { t } = useLanguage();
+  const { t, tpl } = useLanguage();
+  const { density } = useDensity();
+  const compact = density === "compact";
 
   const isVirtual = task.id.startsWith(VIRTUAL_ID_PREFIX);
+
+  const overdueDays =
+    !task.done && !task.isEvent && task.date && task.date.slice(0, 10) < getLocalTodayStr()
+      ? Math.round(
+          (new Date(`${getLocalTodayStr()}T00:00:00Z`).getTime() -
+            new Date(`${task.date.slice(0, 10)}T00:00:00Z`).getTime()) /
+            86_400_000,
+        )
+      : 0;
 
   async function handleToggle() {
     const newDone = !task.done;
@@ -97,17 +111,34 @@ export default function TaskItem({
     triggerDelete();
   }
 
-  async function handleDeleteConfirmed() {
-    onDeleted(task.id);
-    await fetch(`/api/task/${task.id}`, { method: "DELETE" });
-    toast.success(t("task_deleted"));
+  async function deleteTask() {
+    const res = await fetch(`/api/task/${task.id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete task");
   }
 
-  async function handleDeleteThisOne() {
+  function handleDeleteConfirmed() {
+    onDeleted(task.id);
+    undoableAction({
+      message: t("task_deleted"),
+      undoLabel: t("toast_undo"),
+      commit: deleteTask,
+      rollback: () => onCreated(task),
+      errorMessage: t("task_delete_error"),
+      rollbackOnError: true,
+    });
+  }
+
+  function handleDeleteThisOne() {
     setRecurringDialog(null);
     onDeleted(task.id);
-    await fetch(`/api/task/${task.id}`, { method: "DELETE" });
-    toast.success(t("task_occurrence_deleted"));
+    undoableAction({
+      message: t("task_occurrence_deleted"),
+      undoLabel: t("toast_undo"),
+      commit: deleteTask,
+      rollback: () => onCreated(task),
+      errorMessage: t("task_delete_error"),
+      rollbackOnError: true,
+    });
   }
 
   async function handleDeleteAll() {
@@ -120,10 +151,32 @@ export default function TaskItem({
     toast.success(t("task_series_cancelled"));
   }
 
+  async function handleReschedule(dateStr: string) {
+    // Keep the task's existing time-of-day (or lack of one) — an all-day
+    // task shouldn't turn into one timed at midnight just from moving days.
+    const timeStr = task.date && !task.allDay ? task.date.slice(11, 16) : null;
+    const res = await fetch(`/api/task/${task.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: dateStr, time: timeStr }),
+    });
+    if (!res.ok) {
+      toast.error(t("task_reschedule_error"));
+      return;
+    }
+    const updated: SerializedTask = await res.json();
+    if (task.id !== updated.id) {
+      onReplaced(task.id, updated);
+    } else {
+      onUpdated(updated);
+    }
+    toast.success(t("task_rescheduled"));
+  }
+
   async function handleDuplicate() {
     if (!task.date) return;
     const dateStr = task.date.slice(0, 10);
-    const timeStr = task.date.slice(11, 16);
+    const timeStr = task.allDay ? null : task.date.slice(11, 16);
     const res = await fetch("/api/task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -151,7 +204,7 @@ export default function TaskItem({
 
   const categoryBadgeClass = task.category
     ? (COLOR_CLASSES[task.category.color as CategoryColor] ??
-      "bg-gray-100 text-gray-500")
+      "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400")
     : null;
 
   return (
@@ -162,12 +215,20 @@ export default function TaskItem({
         e.stopPropagation();
         setContextMenu({ x: e.clientX, y: e.clientY });
       }}
-      className={`group cursor-pointer rounded-lg border px-3 py-2.5 transition ${
+      draggable={task.date !== null}
+      onDragStart={(e) => {
+        if (!task.date) return;
+        e.dataTransfer.setData("text/plain", task.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      className={`group cursor-pointer rounded-lg border transition ${
+        compact ? "px-2.5 py-1.5" : "px-3 py-2.5"
+      } ${task.date ? "active:cursor-grabbing" : ""} ${
         task.isEvent
           ? "border-amber-200 bg-amber-50 hover:border-amber-300 hover:shadow-sm"
           : task.done
-            ? "border-gray-100 bg-gray-50"
-            : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
+            ? "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
+            : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-200 hover:shadow-sm"
       }`}
     >
       <div className="flex items-start gap-2">
@@ -187,7 +248,7 @@ export default function TaskItem({
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
               task.done
                 ? "border-primary bg-primary"
-                : "border-gray-200 bg-white hover:border-primary"
+                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-primary"
             }`}
           >
             {task.done && (
@@ -200,21 +261,27 @@ export default function TaskItem({
         <div className="min-w-0 flex-1">
           <p
             className={`text-sm font-medium leading-snug wrap-break-word ${
-              task.done && !task.isEvent ? "line-through text-gray-300" : "text-gray-800"
+              task.done && !task.isEvent ? "line-through text-gray-300 dark:text-gray-600" : "text-gray-800 dark:text-gray-200"
             }`}
           >
             {task.title}
           </p>
-          {task.notes && (
+          {task.notes && !compact && (
             <p
               className={`mt-1 line-clamp-2 text-xs leading-relaxed ${
-                task.done && !task.isEvent ? "text-gray-300" : "text-gray-400"
+                task.done && !task.isEvent ? "text-gray-300 dark:text-gray-600" : "text-gray-400 dark:text-gray-500"
               }`}
             >
               {stripMarkdown(task.notes)}
             </p>
           )}
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-1" : "mt-1.5"}`}>
+            {overdueDays > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                <Clock size={8} />
+                {tpl("task_overdue_badge", { n: overdueDays })}
+              </span>
+            )}
             {task.isEvent && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                 <CalendarDays size={8} />
@@ -229,7 +296,7 @@ export default function TaskItem({
               </span>
             )}
             {task.recurringTaskId && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-400">
                 <RefreshCcw size={8} />
                 {t("task_recurring")}
               </span>
@@ -243,14 +310,14 @@ export default function TaskItem({
               handleEditClick();
             }}
             aria-label={t("task_edit")}
-            className="text-gray-300 hover:text-gray-500 transition"
+            className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition"
           >
             <Pencil size={13} />
           </button>
           <button
             onClick={handleDeleteClick}
             aria-label={t("task_delete")}
-            className="text-gray-300 hover:text-red-400 transition"
+            className="text-gray-300 dark:text-gray-600 hover:text-red-400 transition"
           >
             <Trash2 size={13} />
           </button>
@@ -315,6 +382,7 @@ export default function TaskItem({
           x={contextMenu.x}
           y={contextMenu.y}
           onDuplicate={handleDuplicate}
+          onReschedule={handleReschedule}
           onDelete={triggerDelete}
           onClose={() => setContextMenu(null)}
         />

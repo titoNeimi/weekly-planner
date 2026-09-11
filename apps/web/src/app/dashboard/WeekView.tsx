@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DayColumn from "./DayColumn";
+import DayTimeline from "./DayTimeline";
 import MonthView from "./MonthView";
 import {
   CATEGORY_COLORS,
@@ -12,12 +13,18 @@ import type { CategoryColor } from "@/lib/category-colors";
 import CategoryContextMenu from "@/components/category-context-menu";
 import { toast } from "sonner";
 import { getLocalTodayStr } from "@/lib/date";
+import { sortCategories } from "@/lib/categories";
+import { rotateForWeekStart, weekStartOffset } from "@/lib/week";
+import type { WeekStartsOn } from "@/lib/week";
 import { useLanguage } from "@/context/LanguageContext";
+import { isTypingTarget, hasModifier } from "@/lib/keyboard";
 
 export type SerializedCategory = {
   id: string;
   name: string;
   color: string;
+  // Optional: task-embedded categories (e.g. Task.category) don't select this.
+  pinned?: boolean;
 };
 
 export type SerializedTask = {
@@ -28,6 +35,7 @@ export type SerializedTask = {
   notes: string | null;
   done: boolean;
   isEvent: boolean;
+  allDay: boolean;
   date: string | null;
   userId: string;
   recurringTaskId: string | null;
@@ -72,14 +80,13 @@ function isCurrentWeek(days: Date[]): boolean {
   return days.some((d) => d.toISOString().slice(0, 10) === todayLocal);
 }
 
-function getCurrentWeekStart(): string {
+function getCurrentWeekStart(weekStartsOn: WeekStartsOn): string {
   const now = new Date();
-  const localDay = now.getDay();
-  const diff = localDay === 0 ? -6 : 1 - localDay;
-  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
-  const y = monday.getFullYear();
-  const m = String(monday.getMonth() + 1).padStart(2, "0");
-  const d = String(monday.getDate()).padStart(2, "0");
+  const diff = weekStartOffset(now.getDay(), weekStartsOn);
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+  const y = start.getFullYear();
+  const m = String(start.getMonth() + 1).padStart(2, "0");
+  const d = String(start.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}T00:00:00.000Z`;
 }
 
@@ -88,18 +95,27 @@ export default function WeekView({
   teamTasks: initialTeamTasks,
   categories: initialCategories,
   weekStart: initialWeekStart,
+  weekStartsOn = 1,
 }: {
   tasks: SerializedTask[];
   teamTasks: SerializedTeamTask[];
   categories: SerializedCategory[];
   weekStart: string;
+  weekStartsOn?: WeekStartsOn;
 }) {
   const { t, ta } = useLanguage();
-  const DAY_LABELS = ta("days_short");
-  const DAY_LABELS_LONG = ta("days_long");
+  const DAY_LABELS = rotateForWeekStart(ta("days_short"), weekStartsOn);
+  const DAY_LABELS_LONG = rotateForWeekStart(ta("days_long"), weekStartsOn);
   const MONTH_NAMES = ta("months");
 
   const [weekStart, setWeekStart] = useState(initialWeekStart);
+  // `initialWeekStart` is recomputed server-side (e.g. `router.refresh()`
+  // after the week-start-day preference changes in Settings) without
+  // remounting this component — keep local state in sync so the date grid
+  // never disagrees with the day-of-week headers derived from `weekStartsOn`.
+  useEffect(() => {
+    setWeekStart(initialWeekStart);
+  }, [initialWeekStart]);
   const [tasks, setTasks] = useState(initialTasks);
   const [teamTasks, setTeamTasks] = useState(initialTeamTasks);
   const [fetching, setFetching] = useState(false);
@@ -118,7 +134,7 @@ export default function WeekView({
     x: number;
     y: number;
   } | null>(null);
-  const [view, setView] = useState<"week" | "month">("week");
+  const [view, setView] = useState<"week" | "day" | "month">("week");
   const [activeDayIndex, setActiveDayIndex] = useState<number>(() => {
     const todayStr = getLocalTodayStr();
     const idx = getWeekDays(initialWeekStart).findIndex(
@@ -134,6 +150,9 @@ export default function WeekView({
   const rangeLabel = sameMonth
     ? `${MONTH_NAMES[monday.getUTCMonth()]} ${monday.getUTCDate()}–${sunday.getUTCDate()}, ${monday.getUTCFullYear()}`
     : `${MONTH_NAMES[monday.getUTCMonth()]} ${monday.getUTCDate()} – ${MONTH_NAMES[sunday.getUTCMonth()]} ${sunday.getUTCDate()}, ${sunday.getUTCFullYear()}`;
+
+  const activeDate = days[activeDayIndex];
+  const dayHeaderLabel = `${DAY_LABELS_LONG[activeDayIndex]}, ${MONTH_NAMES[activeDate.getUTCMonth()]} ${activeDate.getUTCDate()}`;
 
   async function fetchWeek(start: string) {
     const days = getWeekDays(start);
@@ -164,7 +183,7 @@ export default function WeekView({
   }
 
   async function goToday() {
-    const today = getCurrentWeekStart();
+    const today = getCurrentWeekStart(weekStartsOn);
     setWeekStart(today);
     const todayStr = getLocalTodayStr();
     const idx = getWeekDays(today).findIndex(
@@ -173,6 +192,44 @@ export default function WeekView({
     setActiveDayIndex(idx >= 0 ? idx : 0);
     await fetchWeek(today);
   }
+
+  async function navigateDay(direction: number) {
+    const nextIndex = activeDayIndex + direction;
+    if (nextIndex < 0) {
+      const prevWeek = shiftWeek(weekStart, -1);
+      setWeekStart(prevWeek);
+      setActiveDayIndex(6);
+      await fetchWeek(prevWeek);
+      return;
+    }
+    if (nextIndex > 6) {
+      const nextWeek = shiftWeek(weekStart, 1);
+      setWeekStart(nextWeek);
+      setActiveDayIndex(0);
+      await fetchWeek(nextWeek);
+      return;
+    }
+    setActiveDayIndex(nextIndex);
+  }
+
+  // Left/Right arrow keys step through days (week/day view only — month view
+  // has its own month-level navigation), as long as the user isn't typing.
+  useEffect(() => {
+    if (view === "month") return;
+    function onKey(e: KeyboardEvent) {
+      if (hasModifier(e) || isTypingTarget(e.target)) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        navigateDay(-1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        navigateDay(1);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, activeDayIndex, weekStart]);
 
   function handleTaskCreated(task: SerializedTask) {
     setTasks((prev) => [...prev, task]);
@@ -192,6 +249,62 @@ export default function WeekView({
 
   function handleTaskReplaced(oldId: string, task: SerializedTask) {
     setTasks((prev) => prev.map((t) => (t.id === oldId ? task : t)));
+  }
+
+  async function handleTaskDrop(taskId: string, dateStr: string) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || !task.date || task.date.slice(0, 10) === dateStr) return;
+    // A whole-day move keeps the task's existing time-of-day (or lack of one)
+    // as-is — an all-day task must stay all-day, not turn into one timed at
+    // midnight.
+    const timeStr = task.allDay ? null : task.date.slice(11, 16);
+    handleTaskUpdated({
+      ...task,
+      date: `${dateStr}T${timeStr ?? "00:00"}:00.000Z`,
+    });
+    try {
+      const res = await fetch(`/api/task/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateStr, time: timeStr }),
+      });
+      if (!res.ok) throw new Error("Failed to reschedule");
+      const updated: SerializedTask = await res.json();
+      if (updated.id !== taskId) {
+        handleTaskReplaced(taskId, updated);
+      } else {
+        handleTaskUpdated(updated);
+      }
+      toast.success(t("task_rescheduled"));
+    } catch {
+      handleTaskUpdated(task);
+      toast.error(t("task_reschedule_error"));
+    }
+  }
+
+  async function handleHourDrop(taskId: string, time: string) {
+    const task = tasks.find((tk) => tk.id === taskId);
+    if (!task || !task.date || task.date.slice(11, 16) === time) return;
+    const dateStr = task.date.slice(0, 10);
+    handleTaskUpdated({ ...task, date: `${dateStr}T${time}:00.000Z` });
+    try {
+      const res = await fetch(`/api/task/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateStr, time }),
+      });
+      if (!res.ok) throw new Error("Failed to reschedule");
+      const updated: SerializedTask = await res.json();
+      if (updated.id !== taskId) {
+        handleTaskReplaced(taskId, updated);
+      } else {
+        handleTaskUpdated(updated);
+      }
+      toast.success(t("task_rescheduled"));
+    } catch {
+      handleTaskUpdated(task);
+      toast.error(t("task_reschedule_error"));
+    }
   }
 
   function handleSeriesDeleted(recurringTaskId: string) {
@@ -228,6 +341,12 @@ export default function WeekView({
           ? { ...t, category: { ...t.category, name: newName } }
           : t,
       ),
+    );
+  }
+
+  function handleCategoryPinToggled(id: string, pinned: boolean) {
+    setCategories((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, pinned } : c)),
     );
   }
 
@@ -280,19 +399,41 @@ export default function WeekView({
             <button
               onClick={() => navigate(-1)}
               disabled={fetching}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-40 transition"
               aria-label={t("week_prev")}
             >
               ←
             </button>
-            <h1 className="min-w-[8rem] text-center text-sm font-semibold text-gray-900 sm:min-w-[12rem] sm:text-lg">
+            <h1 className="min-w-[8rem] text-center text-sm font-semibold text-gray-900 dark:text-gray-100 sm:min-w-[12rem] sm:text-lg">
               {rangeLabel}
             </h1>
             <button
               onClick={() => navigate(1)}
               disabled={fetching}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-40 transition"
               aria-label={t("week_next")}
+            >
+              →
+            </button>
+          </div>
+        ) : view === "day" ? (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigateDay(-1)}
+              disabled={fetching}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-40 transition"
+              aria-label={t("week_prev_day")}
+            >
+              ←
+            </button>
+            <h1 className="min-w-[10rem] text-center text-sm font-semibold text-gray-900 dark:text-gray-100 sm:text-lg">
+              {dayHeaderLabel}
+            </h1>
+            <button
+              onClick={() => navigateDay(1)}
+              disabled={fetching}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-40 transition"
+              aria-label={t("week_next_day")}
             >
               →
             </button>
@@ -301,36 +442,46 @@ export default function WeekView({
           <div />
         )}
         <div className="flex items-center gap-2">
-          {view === "week" && (
+          {(view === "week" || view === "day") && (
             <button
               onClick={goToday}
               disabled={onCurrentWeek}
               className={`rounded-lg border px-3 py-1.5 text-sm transition ${
                 onCurrentWeek
-                  ? "border-transparent text-gray-300 cursor-default"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  ? "border-transparent text-gray-300 dark:text-gray-600 cursor-default"
+                  : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               {t("week_today")}
             </button>
           )}
-          <div className="flex overflow-hidden rounded-lg border border-gray-200 text-sm">
+          <div className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
             <button
               onClick={() => setView("week")}
               className={`px-3 py-1.5 transition ${
                 view === "week"
                   ? "bg-primary text-white"
-                  : "text-gray-500 hover:bg-gray-50"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               {t("week_view_week")}
+            </button>
+            <button
+              onClick={() => setView("day")}
+              className={`px-3 py-1.5 transition ${
+                view === "day"
+                  ? "bg-primary text-white"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+              }`}
+            >
+              {t("week_view_day")}
             </button>
             <button
               onClick={() => setView("month")}
               className={`px-3 py-1.5 transition ${
                 view === "month"
                   ? "bg-primary text-white"
-                  : "text-gray-500 hover:bg-gray-50"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               {t("week_view_month")}
@@ -347,14 +498,14 @@ export default function WeekView({
               onClick={() => setActiveCategoryId(null)}
               className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${
                 activeCategoryId === null
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
             >
               {t("all")}
             </button>
           )}
-          {categories.map((cat) => (
+          {sortCategories(categories).map((cat) => (
             <button
               key={cat.id}
               onClick={() =>
@@ -367,8 +518,8 @@ export default function WeekView({
               className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${
                 activeCategoryId === cat.id
                   ? (COLOR_CLASSES[cat.color as CategoryColor] ??
-                    "bg-gray-100 text-gray-600")
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400")
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
             >
               {cat.name}
@@ -379,21 +530,21 @@ export default function WeekView({
               setShowCategoryForm((v) => !v);
               setTimeout(() => categoryNameRef.current?.focus(), 0);
             }}
-            className="shrink-0 rounded-full border border-dashed border-gray-300 px-3 py-1 text-xs text-gray-400 hover:border-gray-400 hover:text-gray-600 transition"
+            className="shrink-0 rounded-full border border-dashed border-gray-300 dark:border-gray-600 px-3 py-1 text-xs text-gray-400 dark:text-gray-500 hover:border-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
           >
             {t("week_new_category")}
           </button>
         </div>
 
         {showCategoryForm && (
-          <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+          <div className="flex flex-col gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
             <input
               ref={categoryNameRef}
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreateCategory()}
               placeholder={t("week_category_name_placeholder")}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-200"
+              className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500 focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
             />
             <div className="flex flex-wrap gap-1.5">
               {CATEGORY_COLORS.map((color) => (
@@ -415,7 +566,7 @@ export default function WeekView({
                   setShowCategoryForm(false);
                   setNewCategoryName("");
                 }}
-                className="rounded-lg px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-100 transition"
+                className="rounded-lg px-3 py-1.5 text-xs text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
               >
                 {t("cancel")}
               </button>
@@ -441,19 +592,19 @@ export default function WeekView({
               <button
                 onClick={() => setActiveDayIndex((i) => Math.max(0, i - 1))}
                 disabled={activeDayIndex === 0}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-40 transition"
                 aria-label={t("week_prev_day")}
               >
                 ←
               </button>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 {DAY_LABELS_LONG[activeDayIndex]},{" "}
                 {days[activeDayIndex].getUTCDate()}
               </span>
               <button
                 onClick={() => setActiveDayIndex((i) => Math.min(6, i + 1))}
                 disabled={activeDayIndex === 6}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-40 transition"
                 aria-label={t("week_next_day")}
               >
                 →
@@ -481,6 +632,7 @@ export default function WeekView({
               onSeriesDeleted={handleSeriesDeleted}
               onSeriesUpdated={handleSeriesUpdated}
               onCategoryCreated={handleCategoryCreated}
+              onTaskDropped={handleTaskDrop}
             />
           </div>
 
@@ -512,6 +664,7 @@ export default function WeekView({
                         onSeriesDeleted={handleSeriesDeleted}
                         onSeriesUpdated={handleSeriesUpdated}
                         onCategoryCreated={handleCategoryCreated}
+                        onTaskDropped={handleTaskDrop}
                       />
                     </div>
                   );
@@ -546,16 +699,42 @@ export default function WeekView({
                   onSeriesDeleted={handleSeriesDeleted}
                   onSeriesUpdated={handleSeriesUpdated}
                   onCategoryCreated={handleCategoryCreated}
+                  onTaskDropped={handleTaskDrop}
                 />
               );
             })}
           </div>
         </>
+      ) : view === "day" ? (
+        <div
+          className={`transition-opacity ${fetching ? "opacity-50" : ""}`}
+        >
+          <DayTimeline
+            date={activeDate}
+            tasks={datedVisibleTasks.filter(
+              (t) => t.date!.slice(0, 10) === activeDate.toISOString().slice(0, 10),
+            )}
+            teamTasks={datedTeamTasks.filter(
+              (t) => t.date!.slice(0, 10) === activeDate.toISOString().slice(0, 10),
+            )}
+            categories={categories}
+            onTaskCreated={handleTaskCreated}
+            onTaskToggled={handleTaskToggled}
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
+            onTaskReplaced={handleTaskReplaced}
+            onSeriesDeleted={handleSeriesDeleted}
+            onSeriesUpdated={handleSeriesUpdated}
+            onCategoryCreated={handleCategoryCreated}
+            onTaskDropped={handleHourDrop}
+          />
+        </div>
       ) : (
         <MonthView
-          categories={categories}
+          categories={sortCategories(categories)}
           activeCategoryId={activeCategoryId}
           onCategoryCreated={handleCategoryCreated}
+          weekStartsOn={weekStartsOn}
         />
       )}
 
@@ -567,6 +746,7 @@ export default function WeekView({
           onClose={() => setContextMenu(null)}
           onRenamed={handleCategoryRenamed}
           onDeleted={handleCategoryDeleted}
+          onPinToggled={handleCategoryPinToggled}
         />
       )}
     </div>

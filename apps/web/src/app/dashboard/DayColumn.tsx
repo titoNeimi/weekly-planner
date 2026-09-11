@@ -11,6 +11,7 @@ import TeamTaskItem from "./TeamTaskItem";
 import AddTaskModal from "./AddTaskModal";
 import { getLocalTodayStr } from "@/lib/date";
 import { useLanguage } from "@/context/LanguageContext";
+import { useDensity } from "@/context/DensityContext";
 
 export default function DayColumn({
   label,
@@ -26,6 +27,7 @@ export default function DayColumn({
   onSeriesDeleted,
   onSeriesUpdated,
   onCategoryCreated,
+  onTaskDropped,
 }: {
   label: string;
   date: Date;
@@ -46,25 +48,44 @@ export default function DayColumn({
     >,
   ) => void;
   onCategoryCreated: (category: SerializedCategory) => void;
+  onTaskDropped?: (taskId: string, dateStr: string) => void;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const { t } = useLanguage();
-  const isToday =
-    date.toISOString().slice(0, 10) === getLocalTodayStr();
+  const { density } = useDensity();
+  const dateStr = date.toISOString().slice(0, 10);
+  const isToday = dateStr === getLocalTodayStr();
 
   return (
     <>
       <div
-        className={`flex h-full flex-col rounded-xl border p-3 sm:p-4 ${
-          isToday
-            ? "border-primary bg-white shadow-sm"
-            : "border-gray-200 bg-white"
+        onDragOver={(e) => {
+          if (!onTaskDropped) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          if (!onTaskDropped) return;
+          e.preventDefault();
+          setDragOver(false);
+          const taskId = e.dataTransfer.getData("text/plain");
+          if (taskId) onTaskDropped(taskId, dateStr);
+        }}
+        className={`flex h-full flex-col rounded-xl border p-3 transition sm:p-4 ${
+          dragOver
+            ? "border-primary bg-primary-light/50"
+            : isToday
+              ? "border-primary bg-white dark:bg-gray-900 shadow-sm"
+              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
         }`}
       >
         <div className="mb-3 flex items-center justify-between">
           <span
             className={`text-[10px] font-semibold uppercase tracking-widest ${
-              isToday ? "text-gray-900" : "text-gray-400"
+              isToday ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"
             }`}
           >
             {label}
@@ -73,14 +94,14 @@ export default function DayColumn({
             className={
               isToday
                 ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white"
-                : "text-sm tabular-nums text-gray-300"
+                : "text-sm tabular-nums text-gray-300 dark:text-gray-600"
             }
           >
             {date.getUTCDate()}
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col gap-2.5">
+        <div className={`flex flex-1 flex-col ${density === "compact" ? "gap-1" : "gap-2.5"}`}>
           {tasks.map((task) => (
             <TaskItem
               key={task.id}
@@ -99,15 +120,15 @@ export default function DayColumn({
             <TeamTaskItem key={task.id} task={task} />
           ))}
           {tasks.length === 0 && teamTasks.length === 0 && (
-            <p className="py-3 text-center text-xs text-gray-300">
-              {t("day_nothing_planned")}
+            <p className="py-3 text-center text-xs text-gray-300 dark:text-gray-600">
+              {isToday ? t("day_nothing_planned_today") : t("day_nothing_planned")}
             </p>
           )}
         </div>
 
         <button
           onClick={() => setModalOpen(true)}
-          className="mt-3 w-full rounded-lg border border-dashed border-gray-200 py-2 text-center text-xs text-gray-400 hover:border-gray-300 hover:text-gray-600 transition"
+          className="mt-3 w-full rounded-lg border border-dashed border-gray-200 dark:border-gray-700 py-2 text-center text-xs text-gray-400 dark:text-gray-500 hover:border-gray-300 hover:text-gray-600 dark:hover:text-gray-300 transition"
         >
           {t("day_add_task")}
         </button>

@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Category" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "pinned" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "Profile" ADD COLUMN     "weekStartsOn" INTEGER NOT NULL DEFAULT 1;

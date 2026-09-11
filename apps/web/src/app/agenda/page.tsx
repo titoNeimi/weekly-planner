@@ -3,15 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import WeekView from "../dashboard/WeekView";
 import { getTasksForRange } from "@/lib/get-tasks-for-range";
+import { startOfWeekUTC } from "@/lib/week";
+import type { WeekStartsOn } from "@/lib/week";
 
-function getWeekStart(dateStr?: string): Date {
+function getWeekStart(weekStartsOn: WeekStartsOn, dateStr?: string): Date {
   const base = dateStr ? new Date(dateStr) : new Date();
-  const day = base.getUTCDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  const monday = new Date(base);
-  monday.setUTCDate(base.getUTCDate() + diffToMonday);
-  monday.setUTCHours(0, 0, 0, 0);
-  return monday;
+  return startOfWeekUTC(base, weekStartsOn);
 }
 
 export default async function AgendaPage({
@@ -26,7 +23,14 @@ export default async function AgendaPage({
   if (!user) redirect("/login");
 
   const { week } = await searchParams;
-  const monday = getWeekStart(week);
+
+  const profile = await prisma.profile.findUnique({
+    where: { userId: user.id },
+    select: { weekStartsOn: true },
+  });
+  const weekStartsOn: WeekStartsOn = profile?.weekStartsOn === 0 ? 0 : 1;
+
+  const monday = getWeekStart(weekStartsOn, week);
 
   const sunday = new Date(monday);
   sunday.setUTCDate(monday.getUTCDate() + 6);
@@ -34,7 +38,14 @@ export default async function AgendaPage({
 
   const [tasks, categories, rawTeamTasks] = await Promise.all([
     getTasksForRange(user.id, monday, sunday),
-    prisma.category.findMany({ where: { userId: user.id } }),
+    prisma.category.findMany({
+      where: { userId: user.id },
+      select: { id: true, name: true, color: true, pinned: true },
+      // `id` breaks ties deterministically when `createdAt` is equal (e.g.
+      // every pre-existing row, backfilled to the same migration-time
+      // value); cuids are themselves roughly time-ordered.
+      orderBy: [{ pinned: "desc" }, { createdAt: "asc" }, { id: "asc" }],
+    }),
     prisma.teamTask.findMany({
       where: {
         team: { members: { some: { userId: user.id } } },
@@ -52,7 +63,7 @@ export default async function AgendaPage({
   ]);
 
   return (
-    <main className="flex-1 bg-gray-50 px-3 py-4 sm:px-6 sm:py-8">
+    <main className="flex-1 bg-gray-50 dark:bg-gray-950 px-3 py-4 sm:px-6 sm:py-8">
       <WeekView
         tasks={tasks.map((t) => ({
           ...t,
@@ -77,6 +88,7 @@ export default async function AgendaPage({
         }))}
         categories={categories}
         weekStart={monday.toISOString()}
+        weekStartsOn={weekStartsOn}
       />
     </main>
   );

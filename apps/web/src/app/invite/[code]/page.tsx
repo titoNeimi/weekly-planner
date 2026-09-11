@@ -73,27 +73,27 @@ export default function InvitePage() {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-gray-50 px-4">
-      <div className="flex w-full max-w-sm flex-col items-center gap-6 rounded-2xl border border-gray-100 bg-white p-10 text-center shadow-sm">
+    <div className="flex flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+      <div className="flex w-full max-w-sm flex-col items-center gap-6 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-10 text-center shadow-sm">
 
         {state === "loading" && (
           <>
-            <div className="h-7 w-7 animate-spin rounded-full border-2 border-gray-900 border-t-transparent" />
-            <p className="text-sm text-gray-500">{t("invite_loading")}</p>
+            <div className="h-7 w-7 animate-spin rounded-full border-2 border-gray-900 dark:border-gray-100 border-t-transparent" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t("invite_loading")}</p>
           </>
         )}
 
         {(state === "ready" || state === "joining") && preview && (
           <>
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-700">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
               <Users className="h-7 w-7" />
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
                 {t("invite_invited_to")}
               </p>
-              <h1 className="mt-1 text-2xl font-semibold text-gray-900">{preview.teamName}</h1>
+              <h1 className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{preview.teamName}</h1>
             </div>
 
             {joinError && <p className="text-sm text-red-500">{joinError}</p>}
@@ -101,7 +101,7 @@ export default function InvitePage() {
             <button
               onClick={handleJoin}
               disabled={state === "joining"}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-60 cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300 disabled:opacity-60 cursor-pointer"
             >
               {state === "joining" ? (
                 <>
@@ -123,8 +123,8 @@ export default function InvitePage() {
               </svg>
             </div>
             <div>
-              <p className="text-base font-semibold text-gray-900">{tpl("invite_joined", { name: preview?.teamName ?? "" })}</p>
-              <p className="mt-1 text-sm text-gray-500">{t("invite_redirecting")}</p>
+              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{tpl("invite_joined", { name: preview?.teamName ?? "" })}</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("invite_redirecting")}</p>
             </div>
           </>
         )}
@@ -135,14 +135,14 @@ export default function InvitePage() {
               <Users className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-base font-semibold text-gray-900">{t("invite_expired_title")}</p>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{t("invite_expired_title")}</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {t("invite_expired_body")}
               </p>
             </div>
             <a
               href="/dashboard"
-              className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700"
+              className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
             >
               {t("invite_go_dashboard")}
             </a>
@@ -155,12 +155,12 @@ export default function InvitePage() {
               <Users className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-base font-semibold text-gray-900">{t("invite_invalid_title")}</p>
-              <p className="mt-1 text-sm text-gray-500">{t("invite_invalid_body")}</p>
+              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{t("invite_invalid_title")}</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("invite_invalid_body")}</p>
             </div>
             <a
               href="/dashboard"
-              className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700"
+              className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
             >
               {t("invite_go_dashboard")}
             </a>
@@ -169,11 +169,11 @@ export default function InvitePage() {
 
         {state === "error" && (
           <>
-            <p className="text-base font-semibold text-gray-900">{t("invite_error_title")}</p>
-            <p className="text-sm text-gray-500">{t("invite_error_body")}</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{t("invite_error_title")}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t("invite_error_body")}</p>
             <button
               onClick={loadPreview}
-              className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700 cursor-pointer"
+              className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300 cursor-pointer"
             >
               {t("invite_retry")}
             </button>

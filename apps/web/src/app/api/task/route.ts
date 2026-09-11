@@ -56,6 +56,9 @@ export async function POST(request: NextRequest) {
   }
 
   const taskDate = date ? new Date(`${date}T${time ?? "00:00"}:00.000Z`) : null;
+  // A date with no explicit time is "all day" — stored the same as a task
+  // scheduled for midnight, so this flag is the only way to tell them apart.
+  const allDay = Boolean(taskDate) && !time;
 
   if (!recurringTask) {
     const task = await prisma.task.create({
@@ -64,6 +67,7 @@ export async function POST(request: NextRequest) {
         categoryId: categoryId || null,
         notes: notes?.trim() || null,
         date: taskDate,
+        allDay,
         userId: user.id,
         isEvent: Boolean(isEvent),
       },
@@ -116,6 +120,7 @@ export async function POST(request: NextRequest) {
       categoryId: categoryId || null,
       notes: notes?.trim() || null,
       isEvent: Boolean(isEvent),
+      allDay,
     },
     include: { category: { select: { id: true, name: true, color: true } } },
   });
@@ -130,6 +135,7 @@ export async function POST(request: NextRequest) {
       notes: recurring.notes,
       done: false,
       isEvent: recurring.isEvent,
+      allDay: recurring.allDay,
       date: taskDate.toISOString(),
       userId: user.id,
       recurringTaskId: recurring.id,

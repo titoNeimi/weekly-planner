@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
 
   const categories = await prisma.category.findMany({
     where: { userId: user.id },
+    // `id` breaks ties deterministically for categories that share a
+    // `createdAt` (e.g. every pre-existing row, backfilled to the same
+    // migration-time value) — cuids are themselves roughly time-ordered, so
+    // this also approximates creation order for those rows.
+    orderBy: [{ pinned: "desc" }, { createdAt: "asc" }, { id: "asc" }],
   });
 
   return Response.json(categories);

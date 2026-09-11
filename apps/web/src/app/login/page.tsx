@@ -31,15 +31,15 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 bg-[oklch(0.960_0.018_150)]">
-      <div className="w-full max-w-sm animate-fade-in rounded-2xl bg-white px-8 py-10 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
+    <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 bg-[oklch(0.960_0.018_150)] dark:bg-[oklch(0.180_0.020_150)]">
+      <div className="w-full max-w-sm animate-fade-in rounded-2xl bg-white dark:bg-gray-900 px-8 py-10 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
 
         <div className="flex flex-col items-center text-center">
           <WeekMark />
-          <h1 className="mt-5 text-2xl font-semibold tracking-tight text-gray-900">
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
             Weekly Planner
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             {t("login_subtitle")}
           </p>
         </div>
@@ -57,14 +57,14 @@ export default function LoginPage() {
           <button
             onClick={signInWithGoogle}
             disabled={loading}
-            className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? <SpinnerIcon /> : <GoogleIcon />}
             {loading ? t("login_signing_in") : t("login_google")}
           </button>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-500">
+        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
           {t("login_no_account")}
         </p>
       </div>

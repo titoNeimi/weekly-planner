@@ -30,7 +30,7 @@ export default function Avatar({ avatarUrl, name, email }: AvatarProps) {
   }
 
   return (
-    <div className="h-7 w-7 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs font-semibold select-none">
+    <div className="h-7 w-7 rounded-full bg-gray-700 dark:bg-gray-600 flex items-center justify-center text-white text-xs font-semibold select-none">
       {getInitials(name, email)}
     </div>
   );

@@ -70,18 +70,18 @@ function CategoryForm({
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-3">
         <div className="flex min-w-32 flex-1 flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">{t("team_cat_label_name")}</label>
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("team_cat_label_name")}</label>
           <input
             autoFocus
             required
             value={form.name}
             onChange={(e) => onChange({ ...form, name: e.target.value })}
             placeholder={t("team_cat_label_name")}
-            className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400"
+            className="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500"
           />
         </div>
         <div className="flex flex-1 flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
             {t("team_cat_discord_channel")}
           </label>
           {hasDiscord ? (
@@ -89,7 +89,7 @@ function CategoryForm({
               value={form.discordChannel}
               onChange={(e) => onChange({ ...form, discordChannel: e.target.value })}
               disabled={loadingChannels}
-              className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400 disabled:opacity-60"
+              className="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500 disabled:opacity-60"
             >
               <option value="">{t("team_cat_no_channel")}</option>
               {channels.map((c) => (
@@ -102,16 +102,16 @@ function CategoryForm({
             <input
               disabled
               placeholder={t("team_cat_connect_discord")}
-              className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-gray-400 outline-none opacity-60 cursor-not-allowed"
+              className="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-sm text-gray-400 dark:text-gray-500 outline-none opacity-60 cursor-not-allowed"
             />
           )}
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">{t("team_cat_label_reminder")}</label>
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("team_cat_label_reminder")}</label>
           <select
             value={form.reminderHours}
             onChange={(e) => onChange({ ...form, reminderHours: e.target.value })}
-            className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400"
+            className="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500"
           >
             {reminderOptions.map((o) => (
               <option key={o.value} value={o.value}>
@@ -129,8 +129,8 @@ function CategoryForm({
             onClick={() => onChange({ ...form, color: c })}
             className={`h-5 w-5 rounded-full transition ${SWATCH_CLASSES[c]} ring-offset-1 ${
               form.color === c
-                ? "ring-2 ring-gray-500"
-                : "hover:ring-1 hover:ring-gray-300"
+                ? "ring-2 ring-gray-500 dark:ring-gray-500"
+                : "hover:ring-1 hover:ring-gray-300 dark:hover:ring-gray-600"
             }`}
           />
         ))}
@@ -139,7 +139,7 @@ function CategoryForm({
         <button
           type="button"
           onClick={onCancel}
-          className="cursor-pointer rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-white"
+          className="cursor-pointer rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 transition hover:bg-white"
         >
           {t("cancel")}
         </button>
@@ -274,9 +274,9 @@ export default function TeamCategoriesSection({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-        <h2 className="text-sm font-semibold text-gray-900">{t("team_cat_title")}</h2>
+    <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
+      <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("team_cat_title")}</h2>
         {canManage && (
           <button
             onClick={() => {
@@ -284,7 +284,7 @@ export default function TeamCategoriesSection({
               setEditingId(null);
               setCreateForm(defaultForm());
             }}
-            className="flex cursor-pointer items-center gap-1 text-sm text-gray-500 transition hover:text-gray-900"
+            className="flex cursor-pointer items-center gap-1 text-sm text-gray-500 dark:text-gray-400 transition hover:text-gray-900 dark:hover:text-gray-100"
           >
             <Plus className="h-4 w-4" />
             {t("team_cat_new")}
@@ -295,7 +295,7 @@ export default function TeamCategoriesSection({
       {showCreate && canManage && (
         <form
           onSubmit={createCategory}
-          className="border-b border-gray-100 bg-gray-50 px-5 py-4"
+          className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 px-5 py-4"
         >
           <CategoryForm
             form={createForm}
@@ -311,15 +311,15 @@ export default function TeamCategoriesSection({
       )}
 
       {categories.length === 0 && !showCreate ? (
-        <p className="px-5 py-8 text-center text-sm text-gray-400">
+        <p className="px-5 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
           {canManage ? t("team_cat_empty") : t("team_cat_empty_short")}
         </p>
       ) : (
-        <ul className="divide-y divide-gray-50">
+        <ul className="divide-y divide-gray-50 dark:divide-gray-800">
           {categories.map((cat) => (
             <li key={cat.id}>
               {editingId === cat.id ? (
-                <div className="bg-gray-50 px-5 py-4">
+                <div className="bg-gray-50 dark:bg-gray-950 px-5 py-4">
                   <CategoryForm
                     form={editForm}
                     onChange={setEditForm}
@@ -336,19 +336,19 @@ export default function TeamCategoriesSection({
                 <div className="flex items-center gap-3 px-5 py-3">
                   <span
                     className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                      SWATCH_CLASSES[cat.color as CategoryColor] ?? "bg-gray-300"
+                      SWATCH_CLASSES[cat.color as CategoryColor] ?? "bg-gray-300 dark:bg-gray-600"
                     }`}
                   />
-                  <span className="flex-1 text-sm font-medium text-gray-800">
+                  <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200">
                     {cat.name}
                   </span>
                   <div className="flex shrink-0 items-center gap-3">
                     {cat.discordChannel ? (
-                      <span className="hidden max-w-32 truncate text-xs text-gray-400 sm:block">
+                      <span className="hidden max-w-32 truncate text-xs text-gray-400 dark:text-gray-500 sm:block">
                         #{channels.find((c) => c.id === cat.discordChannel)?.name ?? "channel"}
                       </span>
                     ) : (
-                      <span className="hidden text-xs text-gray-300 sm:block">
+                      <span className="hidden text-xs text-gray-300 dark:text-gray-600 sm:block">
                         {t("team_cat_no_channel")}
                       </span>
                     )}
@@ -357,7 +357,7 @@ export default function TeamCategoriesSection({
                         {cat.reminderHours}h
                       </span>
                     ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400">
+                      <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-gray-400 dark:text-gray-500">
                         {t("team_cat_no_reminder")}
                       </span>
                     )}
@@ -365,14 +365,14 @@ export default function TeamCategoriesSection({
                       <>
                         <button
                           onClick={() => startEdit(cat)}
-                          className="cursor-pointer text-gray-300 transition hover:text-gray-500"
+                          className="cursor-pointer text-gray-300 dark:text-gray-600 transition hover:text-gray-500 dark:hover:text-gray-400"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => deleteCategory(cat.id)}
                           disabled={deletingId === cat.id}
-                          className="cursor-pointer text-gray-300 transition hover:text-red-500 disabled:opacity-40"
+                          className="cursor-pointer text-gray-300 dark:text-gray-600 transition hover:text-red-500 disabled:opacity-40"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
