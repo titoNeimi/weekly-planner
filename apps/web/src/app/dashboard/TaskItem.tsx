@@ -130,6 +130,26 @@ export default function TaskItem({
     toast.success(t("task_series_cancelled"));
   }
 
+  async function handleReschedule(dateStr: string) {
+    const timeStr = task.date ? task.date.slice(11, 16) : null;
+    const res = await fetch(`/api/task/${task.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: dateStr, time: timeStr }),
+    });
+    if (!res.ok) {
+      toast.error(t("task_reschedule_error"));
+      return;
+    }
+    const updated: SerializedTask = await res.json();
+    if (task.id !== updated.id) {
+      onReplaced(task.id, updated);
+    } else {
+      onUpdated(updated);
+    }
+    toast.success(t("task_rescheduled"));
+  }
+
   async function handleDuplicate() {
     if (!task.date) return;
     const dateStr = task.date.slice(0, 10);
@@ -172,7 +192,15 @@ export default function TaskItem({
         e.stopPropagation();
         setContextMenu({ x: e.clientX, y: e.clientY });
       }}
+      draggable={task.date !== null}
+      onDragStart={(e) => {
+        if (!task.date) return;
+        e.dataTransfer.setData("text/plain", task.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
       className={`group cursor-pointer rounded-lg border px-3 py-2.5 transition ${
+        task.date ? "active:cursor-grabbing" : ""
+      } ${
         task.isEvent
           ? "border-amber-200 bg-amber-50 hover:border-amber-300 hover:shadow-sm"
           : task.done
@@ -331,6 +359,7 @@ export default function TaskItem({
           x={contextMenu.x}
           y={contextMenu.y}
           onDuplicate={handleDuplicate}
+          onReschedule={handleReschedule}
           onDelete={triggerDelete}
           onClose={() => setContextMenu(null)}
         />

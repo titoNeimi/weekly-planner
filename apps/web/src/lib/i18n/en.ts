@@ -48,6 +48,11 @@ const en = {
   overview_past: "Past",
   overview_overdue: "{n} overdue",
   task_overdue_badge: "{n}d overdue",
+  past_mark_all_done: "Mark all done",
+  past_clear_all: "Clear all",
+  past_mark_all_done_success: "Marked {n} tasks done",
+  past_clear_all_confirm: "Delete {n} overdue tasks? This cannot be undone.",
+  past_clear_all_success: "Deleted {n} tasks",
 
   // Today hero
   hero_quick_add_placeholder: "Add a task for today…",
@@ -78,6 +83,7 @@ const en = {
   week_next: "Next week",
   week_today: "Today",
   week_view_week: "Week",
+  week_view_day: "Day",
   week_view_month: "Month",
   week_new_category: "+ Category",
   week_category_name_placeholder: "Category name",
@@ -87,6 +93,10 @@ const en = {
   // Day Column
   day_nothing_planned: "Nothing planned",
   day_add_task: "+ Add task",
+
+  // Day Timeline
+  timeline_title: "Timeline",
+  timeline_all_day: "All day",
 
   // Month View
   month_prev: "Previous month",
@@ -160,6 +170,13 @@ const en = {
   task_delete: "Delete task",
   task_duplicate: "Duplicate task",
   task_duplicated: "Task duplicated",
+  task_reschedule: "Reschedule",
+  task_reschedule_today: "Today",
+  task_reschedule_tomorrow: "Tomorrow",
+  task_reschedule_next_week: "Next week",
+  task_reschedule_back: "Back",
+  task_rescheduled: "Task rescheduled",
+  task_reschedule_error: "Couldn't reschedule — try again",
 
   // Recurring Dialog
   recurring_title: "Recurring task",

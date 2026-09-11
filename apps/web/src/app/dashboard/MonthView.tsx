@@ -59,6 +59,7 @@ export default function MonthView({
   const [addDate, setAddDate] = useState<Date | null>(null);
   const [detailTask, setDetailTask] = useState<SerializedTask | null>(null);
   const [editTask, setEditTask] = useState<SerializedTask | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMonth(monthStart);
@@ -89,6 +90,31 @@ export default function MonthView({
     setTasks((prev) => prev.filter((t) => t.id !== id));
     await fetch(`/api/task/${id}`, { method: "DELETE" });
     toast.success(t("task_deleted"));
+  }
+
+  async function handleTaskDrop(taskId: string, dateStr: string) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || !task.date || task.date.slice(0, 10) === dateStr) return;
+    const timeStr = task.date.slice(11, 16);
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId ? { ...t, date: `${dateStr}T${timeStr}:00.000Z` } : t,
+      ),
+    );
+    try {
+      const res = await fetch(`/api/task/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateStr, time: timeStr }),
+      });
+      if (!res.ok) throw new Error("Failed to reschedule");
+      const updated: SerializedTask = await res.json();
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+      toast.success(t("task_rescheduled"));
+    } catch {
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
+      toast.error(t("task_reschedule_error"));
+    }
   }
 
   async function navigate(direction: number) {
@@ -168,8 +194,26 @@ export default function MonthView({
             <div
               key={i}
               onClick={() => setAddDate(date)}
-              className={`group flex min-h-16 sm:min-h-28 cursor-pointer flex-col gap-1 p-1 sm:p-2 ${
-                isCurrentMonth ? "bg-white" : "bg-gray-50"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setDragOverDate(dateStr);
+              }}
+              onDragLeave={() =>
+                setDragOverDate((d) => (d === dateStr ? null : d))
+              }
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverDate(null);
+                const taskId = e.dataTransfer.getData("text/plain");
+                if (taskId) handleTaskDrop(taskId, dateStr);
+              }}
+              className={`group flex min-h-16 sm:min-h-28 cursor-pointer flex-col gap-1 p-1 transition sm:p-2 ${
+                dragOverDate === dateStr
+                  ? "bg-primary-light"
+                  : isCurrentMonth
+                    ? "bg-white"
+                    : "bg-gray-50"
               }`}
             >
               {/* Day number */}
@@ -193,6 +237,12 @@ export default function MonthView({
                     onClick={(e) => {
                       e.stopPropagation();
                       setDetailTask(task);
+                    }}
+                    draggable
+                    onDragStart={(e) => {
+                      e.stopPropagation();
+                      e.dataTransfer.setData("text/plain", task.id);
+                      e.dataTransfer.effectAllowed = "move";
                     }}
                     className={`group/task flex cursor-pointer items-start gap-1 rounded px-1 py-0.5 hover:bg-gray-100 transition ${
                       task.done ? "opacity-40" : ""

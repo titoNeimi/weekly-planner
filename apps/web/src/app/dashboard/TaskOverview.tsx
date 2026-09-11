@@ -199,6 +199,40 @@ export default function TaskOverview({
     }, 0);
   }
 
+  async function handleMarkAllPastDone() {
+    const ids = pastTasks.map((t) => t.id);
+    if (ids.length === 0) return;
+    setTasks((prev) =>
+      prev.map((t) => (ids.includes(t.id) ? { ...t, done: true } : t)),
+    );
+    const results = await Promise.allSettled(
+      ids.map((id) =>
+        fetch(`/api/task/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ done: true }),
+        }),
+      ),
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      toast.error(tpl("overdue_banner_partial_error", { n: failed }));
+    } else {
+      toast.success(tpl("past_mark_all_done_success", { n: ids.length }));
+    }
+  }
+
+  async function handleClearAllPast() {
+    const ids = pastTasks.map((t) => t.id);
+    if (ids.length === 0) return;
+    if (!confirm(tpl("past_clear_all_confirm", { n: ids.length }))) return;
+    setTasks((prev) => prev.filter((t) => !ids.includes(t.id)));
+    await Promise.allSettled(
+      ids.map((id) => fetch(`/api/task/${id}`, { method: "DELETE" })),
+    );
+    toast.success(tpl("past_clear_all_success", { n: ids.length }));
+  }
+
   const taskItemProps = {
     categories,
     onToggled: handleTaskToggled,
@@ -313,6 +347,20 @@ export default function TaskOverview({
 
             {!pastHidden && (
               <div className="flex flex-col gap-6">
+                <div className="-mt-1 flex justify-end gap-4">
+                  <button
+                    onClick={handleMarkAllPastDone}
+                    className="text-xs font-medium text-gray-400 hover:text-gray-700 transition"
+                  >
+                    {t("past_mark_all_done")}
+                  </button>
+                  <button
+                    onClick={handleClearAllPast}
+                    className="text-xs font-medium text-gray-400 hover:text-red-500 transition"
+                  >
+                    {t("past_clear_all")}
+                  </button>
+                </div>
                 {pastDates.map((dateStr) => (
                   <div key={dateStr} className="flex flex-col gap-2.5">
                     <h2 className="text-xs font-medium text-gray-400">

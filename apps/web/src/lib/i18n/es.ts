@@ -50,6 +50,11 @@ const es: Dict = {
   overview_past: "Pasado",
   overview_overdue: "{n} atrasada{s}",
   task_overdue_badge: "{n}d de atraso",
+  past_mark_all_done: "Marcar todas como hechas",
+  past_clear_all: "Borrar todas",
+  past_mark_all_done_success: "Se marcaron {n} tareas como hechas",
+  past_clear_all_confirm: "¿Eliminar {n} tareas atrasadas? Esto no se puede deshacer.",
+  past_clear_all_success: "Se eliminaron {n} tareas",
 
   // Today hero
   hero_quick_add_placeholder: "Añade una tarea para hoy…",
@@ -80,6 +85,7 @@ const es: Dict = {
   week_next: "Semana siguiente",
   week_today: "Hoy",
   week_view_week: "Semana",
+  week_view_day: "Día",
   week_view_month: "Mes",
   week_new_category: "+ Categoría",
   week_category_name_placeholder: "Nombre de categoría",
@@ -89,6 +95,10 @@ const es: Dict = {
   // Day Column
   day_nothing_planned: "Nada planificado",
   day_add_task: "+ Añadir tarea",
+
+  // Day Timeline
+  timeline_title: "Línea de tiempo",
+  timeline_all_day: "Todo el día",
 
   // Month View
   month_prev: "Mes anterior",
@@ -162,6 +172,13 @@ const es: Dict = {
   task_delete: "Eliminar tarea",
   task_duplicate: "Duplicar tarea",
   task_duplicated: "Tarea duplicada",
+  task_reschedule: "Reprogramar",
+  task_reschedule_today: "Hoy",
+  task_reschedule_tomorrow: "Mañana",
+  task_reschedule_next_week: "La próxima semana",
+  task_reschedule_back: "Atrás",
+  task_rescheduled: "Tarea reprogramada",
+  task_reschedule_error: "No se pudo reprogramar — inténtalo de nuevo",
 
   // Recurring Dialog
   recurring_title: "Tarea recurrente",

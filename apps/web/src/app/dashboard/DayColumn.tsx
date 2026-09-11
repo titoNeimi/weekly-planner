@@ -26,6 +26,7 @@ export default function DayColumn({
   onSeriesDeleted,
   onSeriesUpdated,
   onCategoryCreated,
+  onTaskDropped,
 }: {
   label: string;
   date: Date;
@@ -46,19 +47,37 @@ export default function DayColumn({
     >,
   ) => void;
   onCategoryCreated: (category: SerializedCategory) => void;
+  onTaskDropped?: (taskId: string, dateStr: string) => void;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const { t } = useLanguage();
-  const isToday =
-    date.toISOString().slice(0, 10) === getLocalTodayStr();
+  const dateStr = date.toISOString().slice(0, 10);
+  const isToday = dateStr === getLocalTodayStr();
 
   return (
     <>
       <div
-        className={`flex h-full flex-col rounded-xl border p-3 sm:p-4 ${
-          isToday
-            ? "border-primary bg-white shadow-sm"
-            : "border-gray-200 bg-white"
+        onDragOver={(e) => {
+          if (!onTaskDropped) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          if (!onTaskDropped) return;
+          e.preventDefault();
+          setDragOver(false);
+          const taskId = e.dataTransfer.getData("text/plain");
+          if (taskId) onTaskDropped(taskId, dateStr);
+        }}
+        className={`flex h-full flex-col rounded-xl border p-3 transition sm:p-4 ${
+          dragOver
+            ? "border-primary bg-primary-light/50"
+            : isToday
+              ? "border-primary bg-white shadow-sm"
+              : "border-gray-200 bg-white"
         }`}
       >
         <div className="mb-3 flex items-center justify-between">

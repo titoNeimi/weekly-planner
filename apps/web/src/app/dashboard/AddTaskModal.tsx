@@ -12,12 +12,14 @@ const NEW_CATEGORY_VALUE = NEW_OPTION;
 
 export default function AddTaskModal({
   defaultDate,
+  defaultTime,
   onClose,
   onSaved,
   categories,
   onCategoryCreated,
 }: {
   defaultDate: Date;
+  defaultTime?: string;
   onClose: () => void;
   onSaved: (task: SerializedTask) => void;
   categories: SerializedCategory[];
@@ -31,7 +33,7 @@ export default function AddTaskModal({
     `${defaultDate.getUTCFullYear()}-${String(defaultDate.getUTCMonth() + 1).padStart(2, "0")}-${String(defaultDate.getUTCDate()).padStart(2, "0")}`,
   );
   const [time, setTime] = useState(
-    () => `${String(new Date().getHours()).padStart(2, "0")}:00`,
+    () => defaultTime ?? `${String(new Date().getHours()).padStart(2, "0")}:00`,
   );
   const [saving, setSaving] = useState(false);
 

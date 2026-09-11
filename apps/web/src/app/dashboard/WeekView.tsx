@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import DayColumn from "./DayColumn";
+import DayTimeline from "./DayTimeline";
 import MonthView from "./MonthView";
 import {
   CATEGORY_COLORS,
@@ -118,7 +119,7 @@ export default function WeekView({
     x: number;
     y: number;
   } | null>(null);
-  const [view, setView] = useState<"week" | "month">("week");
+  const [view, setView] = useState<"week" | "day" | "month">("week");
   const [activeDayIndex, setActiveDayIndex] = useState<number>(() => {
     const todayStr = getLocalTodayStr();
     const idx = getWeekDays(initialWeekStart).findIndex(
@@ -134,6 +135,9 @@ export default function WeekView({
   const rangeLabel = sameMonth
     ? `${MONTH_NAMES[monday.getUTCMonth()]} ${monday.getUTCDate()}–${sunday.getUTCDate()}, ${monday.getUTCFullYear()}`
     : `${MONTH_NAMES[monday.getUTCMonth()]} ${monday.getUTCDate()} – ${MONTH_NAMES[sunday.getUTCMonth()]} ${sunday.getUTCDate()}, ${sunday.getUTCFullYear()}`;
+
+  const activeDate = days[activeDayIndex];
+  const dayHeaderLabel = `${DAY_LABELS_LONG[activeDayIndex]}, ${MONTH_NAMES[activeDate.getUTCMonth()]} ${activeDate.getUTCDate()}`;
 
   async function fetchWeek(start: string) {
     const days = getWeekDays(start);
@@ -174,6 +178,25 @@ export default function WeekView({
     await fetchWeek(today);
   }
 
+  async function navigateDay(direction: number) {
+    const nextIndex = activeDayIndex + direction;
+    if (nextIndex < 0) {
+      const prevWeek = shiftWeek(weekStart, -1);
+      setWeekStart(prevWeek);
+      setActiveDayIndex(6);
+      await fetchWeek(prevWeek);
+      return;
+    }
+    if (nextIndex > 6) {
+      const nextWeek = shiftWeek(weekStart, 1);
+      setWeekStart(nextWeek);
+      setActiveDayIndex(0);
+      await fetchWeek(nextWeek);
+      return;
+    }
+    setActiveDayIndex(nextIndex);
+  }
+
   function handleTaskCreated(task: SerializedTask) {
     setTasks((prev) => [...prev, task]);
   }
@@ -192,6 +215,56 @@ export default function WeekView({
 
   function handleTaskReplaced(oldId: string, task: SerializedTask) {
     setTasks((prev) => prev.map((t) => (t.id === oldId ? task : t)));
+  }
+
+  async function handleTaskDrop(taskId: string, dateStr: string) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || !task.date || task.date.slice(0, 10) === dateStr) return;
+    const timeStr = task.date.slice(11, 16);
+    handleTaskUpdated({ ...task, date: `${dateStr}T${timeStr}:00.000Z` });
+    try {
+      const res = await fetch(`/api/task/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateStr, time: timeStr }),
+      });
+      if (!res.ok) throw new Error("Failed to reschedule");
+      const updated: SerializedTask = await res.json();
+      if (updated.id !== taskId) {
+        handleTaskReplaced(taskId, updated);
+      } else {
+        handleTaskUpdated(updated);
+      }
+      toast.success(t("task_rescheduled"));
+    } catch {
+      handleTaskUpdated(task);
+      toast.error(t("task_reschedule_error"));
+    }
+  }
+
+  async function handleHourDrop(taskId: string, time: string) {
+    const task = tasks.find((tk) => tk.id === taskId);
+    if (!task || !task.date || task.date.slice(11, 16) === time) return;
+    const dateStr = task.date.slice(0, 10);
+    handleTaskUpdated({ ...task, date: `${dateStr}T${time}:00.000Z` });
+    try {
+      const res = await fetch(`/api/task/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateStr, time }),
+      });
+      if (!res.ok) throw new Error("Failed to reschedule");
+      const updated: SerializedTask = await res.json();
+      if (updated.id !== taskId) {
+        handleTaskReplaced(taskId, updated);
+      } else {
+        handleTaskUpdated(updated);
+      }
+      toast.success(t("task_rescheduled"));
+    } catch {
+      handleTaskUpdated(task);
+      toast.error(t("task_reschedule_error"));
+    }
   }
 
   function handleSeriesDeleted(recurringTaskId: string) {
@@ -297,11 +370,33 @@ export default function WeekView({
               →
             </button>
           </div>
+        ) : view === "day" ? (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigateDay(-1)}
+              disabled={fetching}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+              aria-label={t("week_prev_day")}
+            >
+              ←
+            </button>
+            <h1 className="min-w-[10rem] text-center text-sm font-semibold text-gray-900 sm:text-lg">
+              {dayHeaderLabel}
+            </h1>
+            <button
+              onClick={() => navigateDay(1)}
+              disabled={fetching}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 transition"
+              aria-label={t("week_next_day")}
+            >
+              →
+            </button>
+          </div>
         ) : (
           <div />
         )}
         <div className="flex items-center gap-2">
-          {view === "week" && (
+          {(view === "week" || view === "day") && (
             <button
               onClick={goToday}
               disabled={onCurrentWeek}
@@ -324,6 +419,16 @@ export default function WeekView({
               }`}
             >
               {t("week_view_week")}
+            </button>
+            <button
+              onClick={() => setView("day")}
+              className={`px-3 py-1.5 transition ${
+                view === "day"
+                  ? "bg-primary text-white"
+                  : "text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              {t("week_view_day")}
             </button>
             <button
               onClick={() => setView("month")}
@@ -481,6 +586,7 @@ export default function WeekView({
               onSeriesDeleted={handleSeriesDeleted}
               onSeriesUpdated={handleSeriesUpdated}
               onCategoryCreated={handleCategoryCreated}
+              onTaskDropped={handleTaskDrop}
             />
           </div>
 
@@ -512,6 +618,7 @@ export default function WeekView({
                         onSeriesDeleted={handleSeriesDeleted}
                         onSeriesUpdated={handleSeriesUpdated}
                         onCategoryCreated={handleCategoryCreated}
+                        onTaskDropped={handleTaskDrop}
                       />
                     </div>
                   );
@@ -546,11 +653,36 @@ export default function WeekView({
                   onSeriesDeleted={handleSeriesDeleted}
                   onSeriesUpdated={handleSeriesUpdated}
                   onCategoryCreated={handleCategoryCreated}
+                  onTaskDropped={handleTaskDrop}
                 />
               );
             })}
           </div>
         </>
+      ) : view === "day" ? (
+        <div
+          className={`transition-opacity ${fetching ? "opacity-50" : ""}`}
+        >
+          <DayTimeline
+            date={activeDate}
+            tasks={datedVisibleTasks.filter(
+              (t) => t.date!.slice(0, 10) === activeDate.toISOString().slice(0, 10),
+            )}
+            teamTasks={datedTeamTasks.filter(
+              (t) => t.date!.slice(0, 10) === activeDate.toISOString().slice(0, 10),
+            )}
+            categories={categories}
+            onTaskCreated={handleTaskCreated}
+            onTaskToggled={handleTaskToggled}
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
+            onTaskReplaced={handleTaskReplaced}
+            onSeriesDeleted={handleSeriesDeleted}
+            onSeriesUpdated={handleSeriesUpdated}
+            onCategoryCreated={handleCategoryCreated}
+            onTaskDropped={handleHourDrop}
+          />
+        </div>
       ) : (
         <MonthView
           categories={categories}
