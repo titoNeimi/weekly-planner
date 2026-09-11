@@ -31,8 +31,10 @@ export async function PATCH(
     if (title !== undefined) overrides.title = title.trim();
     if (categoryId !== undefined) overrides.categoryId = categoryId ?? null;
     if (notes !== undefined) overrides.notes = notes?.trim() || null;
-    if ("date" in body)
+    if ("date" in body) {
       overrides.date = date ? new Date(`${date}T${time ?? "00:00"}:00.000Z`) : null;
+      overrides.allDay = Boolean(date) && !time;
+    }
 
     const task = await prisma.$transaction(async (tx) => {
       // Suppress this occurrence from the virtual series permanently.
@@ -64,8 +66,10 @@ export async function PATCH(
   if (title !== undefined) data.title = title.trim();
   if (categoryId !== undefined) data.categoryId = categoryId ?? null;
   if (notes !== undefined) data.notes = notes?.trim() || null;
-  if ("date" in body)
+  if ("date" in body) {
     data.date = date ? new Date(`${date}T${time ?? "00:00"}:00.000Z`) : null;
+    data.allDay = Boolean(date) && !time;
+  }
   if (isEvent !== undefined) data.isEvent = Boolean(isEvent);
 
   await prisma.task.updateMany({ where: { id, userId: user.id }, data });

@@ -184,6 +184,7 @@ const en = {
   task_reschedule_back: "Back",
   task_rescheduled: "Task rescheduled",
   task_reschedule_error: "Couldn't reschedule — try again",
+  task_delete_error: "Couldn't delete — try again",
 
   // Recurring Dialog
   recurring_title: "Recurring task",
@@ -207,6 +208,7 @@ const en = {
   cat_created: "Category created",
   cat_pinned: "Category pinned",
   cat_unpinned: "Category unpinned",
+  cat_pin_error: "Couldn't update — try again",
 
   // Teams list
   teams_title: "Teams",

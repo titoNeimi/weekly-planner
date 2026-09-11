@@ -76,20 +76,30 @@ export default function MonthView({
     undoableAction({
       message: t("task_deleted"),
       undoLabel: t("toast_undo"),
-      commit: () => fetch(`/api/task/${id}`, { method: "DELETE" }),
+      commit: async () => {
+        const res = await fetch(`/api/task/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Failed to delete task");
+      },
       rollback: () => {
         if (removed) setTasks((prev) => [...prev, removed]);
       },
+      errorMessage: t("task_delete_error"),
+      rollbackOnError: true,
     });
   }
 
   async function handleTaskDrop(taskId: string, dateStr: string) {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || !task.date || task.date.slice(0, 10) === dateStr) return;
-    const timeStr = task.date.slice(11, 16);
+    // A whole-day move keeps the task's existing time-of-day (or lack of one)
+    // as-is — an all-day task must stay all-day, not turn into one timed at
+    // midnight.
+    const timeStr = task.allDay ? null : task.date.slice(11, 16);
     setTasks((prev) =>
       prev.map((t) =>
-        t.id === taskId ? { ...t, date: `${dateStr}T${timeStr}:00.000Z` } : t,
+        t.id === taskId
+          ? { ...t, date: `${dateStr}T${timeStr ?? "00:00"}:00.000Z` }
+          : t,
       ),
     );
     try {

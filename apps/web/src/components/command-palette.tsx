@@ -99,10 +99,15 @@ export default function CommandPalette() {
       return;
     }
     setLoading(true);
+    let cancelled = false;
     const handle = setTimeout(async () => {
       const res = await fetch(`/api/task/search?q=${encodeURIComponent(q)}`);
       const data: { tasks: TaskResult[]; teamTasks: TeamTaskResult[] } =
         await res.json();
+      // The debounce alone doesn't stop an earlier request from resolving
+      // after a later one (out-of-order network delivery) — bail if a newer
+      // query has since superseded this effect.
+      if (cancelled) return;
       const combined: Result[] = [
         ...data.tasks.map((item): Result => ({ kind: "task", item })),
         ...data.teamTasks.map((item): Result => ({ kind: "team", item })),
@@ -111,7 +116,10 @@ export default function CommandPalette() {
       setActiveIndex(0);
       setLoading(false);
     }, 250);
-    return () => clearTimeout(handle);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [query, open]);
 
   function go(result: Result) {

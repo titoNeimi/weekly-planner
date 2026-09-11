@@ -22,7 +22,9 @@ export default function EditTaskModal({
   const [notes, setNotes] = useState(task.notes ?? "");
   const [hasDate, setHasDate] = useState(task.date !== null);
   const [date, setDate] = useState(task.date?.slice(0, 10) ?? "");
-  const [time, setTime] = useState(task.date?.slice(11, 16) ?? "");
+  const [time, setTime] = useState(
+    task.allDay ? "" : (task.date?.slice(11, 16) ?? ""),
+  );
   const [saving, setSaving] = useState(false);
   const { t } = useLanguage();
 

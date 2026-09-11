@@ -186,6 +186,7 @@ const es: Dict = {
   task_reschedule_back: "Atrás",
   task_rescheduled: "Tarea reprogramada",
   task_reschedule_error: "No se pudo reprogramar — inténtalo de nuevo",
+  task_delete_error: "No se pudo eliminar — inténtalo de nuevo",
 
   // Recurring Dialog
   recurring_title: "Tarea recurrente",
@@ -209,6 +210,7 @@ const es: Dict = {
   cat_created: "Categoría creada",
   cat_pinned: "Categoría fijada",
   cat_unpinned: "Categoría desfijada",
+  cat_pin_error: "No se pudo actualizar — inténtalo de nuevo",
 
   // Teams list
   teams_title: "Equipos",

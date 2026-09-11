@@ -250,7 +250,7 @@ export default function TaskOverview({
     }
   }
 
-  const overdueCount = pastTasks.length;
+  const overdueCount = pastTasks.length + pastTeamTasks.length;
 
   function handleViewOverdue() {
     setPastHidden(false);
@@ -272,13 +272,14 @@ export default function TaskOverview({
       undoLabel: t("toast_undo"),
       commit: async () => {
         const results = await Promise.allSettled(
-          ids.map((id) =>
-            fetch(`/api/task/${id}`, {
+          ids.map(async (id) => {
+            const res = await fetch(`/api/task/${id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ done: true }),
-            }),
-          ),
+            });
+            if (!res.ok) throw new Error("Failed to mark task done");
+          }),
         );
         const failed = results.filter((r) => r.status === "rejected").length;
         if (failed > 0) {
@@ -302,10 +303,18 @@ export default function TaskOverview({
     undoableAction({
       message: tpl("past_clear_all_success", { n: ids.length }),
       undoLabel: t("toast_undo"),
-      commit: () =>
-        Promise.allSettled(
-          ids.map((id) => fetch(`/api/task/${id}`, { method: "DELETE" })),
-        ),
+      commit: async () => {
+        const results = await Promise.allSettled(
+          ids.map(async (id) => {
+            const res = await fetch(`/api/task/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete task");
+          }),
+        );
+        const failed = results.filter((r) => r.status === "rejected").length;
+        if (failed > 0) {
+          toast.error(tpl("overdue_banner_partial_error", { n: failed }));
+        }
+      },
       rollback: () => setTasks((prev) => [...prev, ...removed]),
     });
   }

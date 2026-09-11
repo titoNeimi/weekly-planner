@@ -3,14 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, CalendarClock, Copy, Trash2 } from "lucide-react";
-import { getLocalTodayStr } from "@/lib/date";
+import { getLocalTodayStr, addDaysToDateStr } from "@/lib/date";
 import { useLanguage } from "@/context/LanguageContext";
-
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
 
 export default function TaskContextMenu({
   x,
@@ -129,7 +123,7 @@ export default function TaskContextMenu({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                pick(addDays(today, 1));
+                pick(addDaysToDateStr(today, 1));
               }}
               className="rounded-md px-2 py-1.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
             >
@@ -138,7 +132,7 @@ export default function TaskContextMenu({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                pick(addDays(today, 7));
+                pick(addDaysToDateStr(today, 7));
               }}
               className="rounded-md px-2 py-1.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
             >

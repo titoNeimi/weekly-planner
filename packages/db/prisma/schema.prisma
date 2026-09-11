@@ -21,6 +21,10 @@ model Task {
   done            Boolean        @default(false)
   isEvent         Boolean        @default(false)
   date            DateTime?
+  // True when `date` was set without a specific time (vs. a task genuinely
+  // scheduled for midnight) — `date`'s time-of-day alone can't tell the two
+  // apart, since both store 00:00.
+  allDay          Boolean        @default(false)
   userId          String
   recurringTaskId String?
   recurringTask   RecurringTask? @relation(fields: [recurringTaskId], references: [id])
@@ -41,6 +45,7 @@ model RecurringTask {
   category           Category?     @relation(fields: [categoryId], references: [id])
   notes              String?
   isEvent            Boolean       @default(false)
+  allDay             Boolean       @default(false)
   deletedOccurrences DateTime[]
   tasks              Task[]
   createdAt          DateTime      @default(now())

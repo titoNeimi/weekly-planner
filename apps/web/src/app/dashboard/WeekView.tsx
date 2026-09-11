@@ -14,7 +14,7 @@ import CategoryContextMenu from "@/components/category-context-menu";
 import { toast } from "sonner";
 import { getLocalTodayStr } from "@/lib/date";
 import { sortCategories } from "@/lib/categories";
-import { rotateForWeekStart } from "@/lib/week";
+import { rotateForWeekStart, weekStartOffset } from "@/lib/week";
 import type { WeekStartsOn } from "@/lib/week";
 import { useLanguage } from "@/context/LanguageContext";
 import { isTypingTarget, hasModifier } from "@/lib/keyboard";
@@ -35,6 +35,7 @@ export type SerializedTask = {
   notes: string | null;
   done: boolean;
   isEvent: boolean;
+  allDay: boolean;
   date: string | null;
   userId: string;
   recurringTaskId: string | null;
@@ -81,8 +82,7 @@ function isCurrentWeek(days: Date[]): boolean {
 
 function getCurrentWeekStart(weekStartsOn: WeekStartsOn): string {
   const now = new Date();
-  const localDay = now.getDay();
-  const diff = weekStartsOn === 1 ? (localDay === 0 ? -6 : 1 - localDay) : -localDay;
+  const diff = weekStartOffset(now.getDay(), weekStartsOn);
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
   const y = start.getFullYear();
   const m = String(start.getMonth() + 1).padStart(2, "0");
@@ -109,6 +109,13 @@ export default function WeekView({
   const MONTH_NAMES = ta("months");
 
   const [weekStart, setWeekStart] = useState(initialWeekStart);
+  // `initialWeekStart` is recomputed server-side (e.g. `router.refresh()`
+  // after the week-start-day preference changes in Settings) without
+  // remounting this component — keep local state in sync so the date grid
+  // never disagrees with the day-of-week headers derived from `weekStartsOn`.
+  useEffect(() => {
+    setWeekStart(initialWeekStart);
+  }, [initialWeekStart]);
   const [tasks, setTasks] = useState(initialTasks);
   const [teamTasks, setTeamTasks] = useState(initialTeamTasks);
   const [fetching, setFetching] = useState(false);
@@ -247,8 +254,14 @@ export default function WeekView({
   async function handleTaskDrop(taskId: string, dateStr: string) {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || !task.date || task.date.slice(0, 10) === dateStr) return;
-    const timeStr = task.date.slice(11, 16);
-    handleTaskUpdated({ ...task, date: `${dateStr}T${timeStr}:00.000Z` });
+    // A whole-day move keeps the task's existing time-of-day (or lack of one)
+    // as-is — an all-day task must stay all-day, not turn into one timed at
+    // midnight.
+    const timeStr = task.allDay ? null : task.date.slice(11, 16);
+    handleTaskUpdated({
+      ...task,
+      date: `${dateStr}T${timeStr ?? "00:00"}:00.000Z`,
+    });
     try {
       const res = await fetch(`/api/task/${taskId}`, {
         method: "PATCH",

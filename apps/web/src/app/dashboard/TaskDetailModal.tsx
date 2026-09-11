@@ -135,7 +135,7 @@ export default function TaskDetailModal({
     : null;
 
   const timeUTC = task.date ? task.date.slice(11, 16) : null;
-  const hasTime = timeUTC !== null && timeUTC !== "00:00";
+  const hasTime = timeUTC !== null && !task.allDay;
 
   const dateLabel = task.date
     ? new Date(task.date).toLocaleDateString("en-US", {

@@ -111,13 +111,20 @@ export default function TaskItem({
     triggerDelete();
   }
 
+  async function deleteTask() {
+    const res = await fetch(`/api/task/${task.id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete task");
+  }
+
   function handleDeleteConfirmed() {
     onDeleted(task.id);
     undoableAction({
       message: t("task_deleted"),
       undoLabel: t("toast_undo"),
-      commit: () => fetch(`/api/task/${task.id}`, { method: "DELETE" }),
+      commit: deleteTask,
       rollback: () => onCreated(task),
+      errorMessage: t("task_delete_error"),
+      rollbackOnError: true,
     });
   }
 
@@ -127,8 +134,10 @@ export default function TaskItem({
     undoableAction({
       message: t("task_occurrence_deleted"),
       undoLabel: t("toast_undo"),
-      commit: () => fetch(`/api/task/${task.id}`, { method: "DELETE" }),
+      commit: deleteTask,
       rollback: () => onCreated(task),
+      errorMessage: t("task_delete_error"),
+      rollbackOnError: true,
     });
   }
 
@@ -143,7 +152,9 @@ export default function TaskItem({
   }
 
   async function handleReschedule(dateStr: string) {
-    const timeStr = task.date ? task.date.slice(11, 16) : null;
+    // Keep the task's existing time-of-day (or lack of one) — an all-day
+    // task shouldn't turn into one timed at midnight just from moving days.
+    const timeStr = task.date && !task.allDay ? task.date.slice(11, 16) : null;
     const res = await fetch(`/api/task/${task.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -165,7 +176,7 @@ export default function TaskItem({
   async function handleDuplicate() {
     if (!task.date) return;
     const dateStr = task.date.slice(0, 10);
-    const timeStr = task.date.slice(11, 16);
+    const timeStr = task.allDay ? null : task.date.slice(11, 16);
     const res = await fetch("/api/task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

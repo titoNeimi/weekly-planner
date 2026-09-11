@@ -68,14 +68,16 @@ export default function DayTimeline({
     el?.scrollIntoView({ block: "start" });
   }, [dateStr]);
 
-  const allDayTasks = tasks.filter((tk) => tk.date?.slice(11, 16) === "00:00");
+  const allDayTasks = tasks.filter((tk) => tk.allDay);
+  // TeamTask has no `allDay` flag to disambiguate from an explicit midnight,
+  // so it keeps the time-based heuristic.
   const allDayTeamTasks = teamTasks.filter(
     (tk) => tk.date?.slice(11, 16) === "00:00",
   );
 
   const tasksByHour = new Map<number, SerializedTask[]>();
   for (const task of tasks) {
-    if (!task.date || task.date.slice(11, 16) === "00:00") continue;
+    if (!task.date || task.allDay) continue;
     const h = Number(task.date.slice(11, 13));
     if (!tasksByHour.has(h)) tasksByHour.set(h, []);
     tasksByHour.get(h)!.push(task);

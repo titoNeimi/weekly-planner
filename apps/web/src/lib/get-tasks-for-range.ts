@@ -14,6 +14,7 @@ export interface TaskLike {
   notes: string | null;
   done: boolean;
   isEvent: boolean;
+  allDay: boolean;
   date: Date;
   userId: string;
   recurringTaskId: string | null;
@@ -79,6 +80,7 @@ export async function getTasksForRange(
         notes: recurring.notes,
         done: false,
         isEvent: recurring.isEvent,
+        allDay: recurring.allDay,
         date,
         userId,
         recurringTaskId: recurring.id,
@@ -141,6 +143,7 @@ export async function getNextRecurringInstances(
       notes: recurring.notes,
       done: false,
       isEvent: recurring.isEvent,
+      allDay: recurring.allDay,
       date: nextDate,
       userId,
       recurringTaskId: recurring.id,

@@ -81,12 +81,18 @@ export default function CategoryContextMenu({
     const pinned = !category.pinned;
     onPinToggled?.(category.id, pinned);
     onClose();
-    await fetch(`/api/category/${category.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pinned }),
-    });
-    toast.success(pinned ? t("cat_pinned") : t("cat_unpinned"));
+    try {
+      const res = await fetch(`/api/category/${category.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pinned }),
+      });
+      if (!res.ok) throw new Error("Failed to toggle pin");
+      toast.success(pinned ? t("cat_pinned") : t("cat_unpinned"));
+    } catch {
+      onPinToggled?.(category.id, !pinned);
+      toast.error(t("cat_pin_error"));
+    }
   }
 
   return (

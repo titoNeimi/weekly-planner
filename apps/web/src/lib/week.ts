@@ -3,11 +3,17 @@
 
 export type WeekStartsOn = 0 | 1; // 0 = Sunday, 1 = Monday
 
+/** Day offset (≤ 0) from a weekday (0 = Sunday .. 6 = Saturday) back to the
+ * start of its week — shared by every week-start calculation in this file
+ * (and by callers, like `getCurrentWeekStart` in WeekView, that need the
+ * same offset applied to a locally-read weekday instead of a UTC one). */
+export function weekStartOffset(day: number, weekStartsOn: WeekStartsOn): number {
+  return weekStartsOn === 1 ? (day === 0 ? -6 : 1 - day) : -day;
+}
+
 export function startOfWeekUTC(date: Date, weekStartsOn: WeekStartsOn): Date {
-  const day = date.getUTCDay();
-  const diff = weekStartsOn === 1 ? (day === 0 ? -6 : 1 - day) : -day;
   const start = new Date(date);
-  start.setUTCDate(date.getUTCDate() + diff);
+  start.setUTCDate(date.getUTCDate() + weekStartOffset(date.getUTCDay(), weekStartsOn));
   start.setUTCHours(0, 0, 0, 0);
   return start;
 }

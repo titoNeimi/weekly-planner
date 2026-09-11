@@ -41,7 +41,10 @@ export default async function AgendaPage({
     prisma.category.findMany({
       where: { userId: user.id },
       select: { id: true, name: true, color: true, pinned: true },
-      orderBy: [{ pinned: "desc" }, { createdAt: "asc" }],
+      // `id` breaks ties deterministically when `createdAt` is equal (e.g.
+      // every pre-existing row, backfilled to the same migration-time
+      // value); cuids are themselves roughly time-ordered.
+      orderBy: [{ pinned: "desc" }, { createdAt: "asc" }, { id: "asc" }],
     }),
     prisma.teamTask.findMany({
       where: {
