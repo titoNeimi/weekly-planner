@@ -333,6 +333,8 @@ const es: Dict = {
   settings_theme_light: "Claro",
   settings_theme_dark: "Oscuro",
   settings_theme_system: "Sistema",
+  settings_language: "Idioma",
+  account_menu_label: "Menú de la cuenta",
 
   // Days (short, 1-letter, long)
   days_short: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],

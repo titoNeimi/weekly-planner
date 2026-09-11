@@ -2,13 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Avatar from "@/components/avatar";
 import NavLinks from "@/components/nav-links";
 import SignInLink from "@/components/sign-in-link";
-import LangToggle from "@/components/lang-toggle";
 import SearchButton from "@/components/search-button";
-import SettingsMenu from "@/components/settings-menu";
-import SignOutButton from "@/components/sign-out-button";
+import AccountMenu from "@/components/account-menu";
 
 async function signOut() {
   "use server";
@@ -49,21 +46,15 @@ export default async function Topbar() {
         </div>
 
         {user ? (
-          <div className="flex items-center gap-1 sm:gap-4">
-            <div className="flex items-center gap-2">
-              <Avatar
-                avatarUrl={user.user_metadata.avatar_url}
-                name={user.user_metadata.full_name}
-                email={user.email}
-              />
-              <span className="hidden sm:inline text-sm text-gray-600 dark:text-gray-400">
-                {user.user_metadata.full_name ?? user.email}
-              </span>
-            </div>
+          <div className="flex items-center gap-1">
             <SearchButton />
-            <SettingsMenu initialWeekStartsOn={weekStartsOn} />
-            <LangToggle />
-            <SignOutButton action={signOut} />
+            <AccountMenu
+              avatarUrl={user.user_metadata.avatar_url}
+              name={user.user_metadata.full_name}
+              email={user.email}
+              initialWeekStartsOn={weekStartsOn}
+              onSignOut={signOut}
+            />
           </div>
         ) : (
           <SignInLink />

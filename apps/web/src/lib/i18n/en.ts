@@ -331,6 +331,8 @@ const en = {
   settings_theme_light: "Light",
   settings_theme_dark: "Dark",
   settings_theme_system: "System",
+  settings_language: "Language",
+  account_menu_label: "Account menu",
 
   // Days (short, 1-letter, long)
   days_short: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],

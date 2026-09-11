@@ -1,21 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Settings } from "lucide-react";
+import Avatar from "@/components/avatar";
 import { useDensity } from "@/context/DensityContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 
-export default function SettingsMenu({
-  initialWeekStartsOn,
-}: {
+type Props = {
+  avatarUrl?: string;
+  name?: string;
+  email?: string;
   initialWeekStartsOn: 0 | 1;
-}) {
-  const { t } = useLanguage();
+  onSignOut: () => Promise<void>;
+};
+
+// Single trigger for everything account-scoped — who's signed in, week-start
+// day, density, theme, language, and sign out — so the topbar carries one
+// control here instead of four separate ones.
+export default function AccountMenu({
+  avatarUrl,
+  name,
+  email,
+  initialWeekStartsOn,
+  onSignOut,
+}: Props) {
+  const { t, lang, setLang } = useLanguage();
   const { density, setDensity } = useDensity();
   const { theme, setTheme } = useTheme();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [weekStartsOn, setWeekStartsOn] = useState(initialWeekStartsOn);
   const [saving, setSaving] = useState(false);
@@ -46,7 +57,6 @@ export default function SettingsMenu({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ weekStartsOn: value }),
       });
-      router.refresh();
     } finally {
       setSaving(false);
     }
@@ -56,20 +66,33 @@ export default function SettingsMenu({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label={t("settings_title")}
-        title={t("settings_title")}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 transition"
+        aria-label={t("account_menu_label")}
+        aria-expanded={open}
+        className="flex items-center gap-2 rounded-md p-1 pr-2 transition hover:bg-gray-100 dark:hover:bg-gray-800"
       >
-        <Settings size={16} />
+        <Avatar avatarUrl={avatarUrl} name={name} email={email} />
+        <span className="hidden max-w-[9rem] truncate text-sm text-gray-600 dark:text-gray-400 sm:inline">
+          {name ?? email}
+        </span>
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-gray-100 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-gray-900">
-          <p className="px-1 pb-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-            {t("settings_title")}
-          </p>
+        <div className="absolute right-0 z-50 mt-2 w-64 rounded-xl border border-gray-100 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center gap-2.5 border-b border-gray-100 px-1 pb-3 dark:border-gray-800">
+            <Avatar avatarUrl={avatarUrl} name={name} email={email} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                {name ?? email}
+              </p>
+              {name && email && (
+                <p className="truncate text-xs text-gray-400 dark:text-gray-500">
+                  {email}
+                </p>
+              )}
+            </div>
+          </div>
 
-          <div className="flex flex-col gap-1.5 border-b border-gray-100 pb-3 dark:border-gray-800">
+          <div className="flex flex-col gap-1.5 border-b border-gray-100 py-3 dark:border-gray-800">
             <span className="px-1 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
               {t("settings_week_start")}
             </span>
@@ -125,7 +148,7 @@ export default function SettingsMenu({
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5 pt-3">
+          <div className="flex flex-col gap-1.5 border-b border-gray-100 py-3 dark:border-gray-800">
             <span className="px-1 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
               {t("settings_theme")}
             </span>
@@ -162,6 +185,40 @@ export default function SettingsMenu({
               </button>
             </div>
           </div>
+
+          <div className="flex flex-col gap-1.5 border-b border-gray-100 py-3 dark:border-gray-800">
+            <span className="px-1 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              {t("settings_language")}
+            </span>
+            <div className="flex gap-1 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800">
+              <button
+                onClick={() => setLang("en")}
+                className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition ${
+                  lang === "en"
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100"
+                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => setLang("es")}
+                className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition ${
+                  lang === "es"
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100"
+                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
+              >
+                Español
+              </button>
+            </div>
+          </div>
+
+          <form action={onSignOut} className="pt-1">
+            <button className="w-full rounded-md px-2 py-1.5 text-left text-sm text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100">
+              {t("topbar_sign_out")}
+            </button>
+          </form>
         </div>
       )}
     </div>
