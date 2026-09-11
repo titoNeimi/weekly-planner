@@ -59,6 +59,13 @@ const en = {
   // Assigned to you (team tasks)
   assigned_section_title: "Assigned to you",
 
+  // Week strip
+  weekstrip_go_to_day: "{n} tasks — open in agenda",
+
+  // Dashboard sidebar
+  sidebar_categories_title: "Categories",
+  sidebar_overdue_more: "+{n} more",
+
   // Week View
   week_prev: "Previous week",
   week_next: "Next week",

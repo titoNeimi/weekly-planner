@@ -61,6 +61,13 @@ const es: Dict = {
   // Assigned to you (team tasks)
   assigned_section_title: "Asignadas a ti",
 
+  // Week strip
+  weekstrip_go_to_day: "{n} tareas — abrir en agenda",
+
+  // Dashboard sidebar
+  sidebar_categories_title: "Categorías",
+  sidebar_overdue_more: "+{n} más",
+
   // Week View
   week_prev: "Semana anterior",
   week_next: "Semana siguiente",

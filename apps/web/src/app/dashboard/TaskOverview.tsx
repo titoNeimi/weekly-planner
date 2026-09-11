@@ -11,6 +11,8 @@ import AddTaskModal from "./AddTaskModal";
 import TodayHero from "./TodayHero";
 import OverdueBanner from "./OverdueBanner";
 import AssignedToYouSection from "./AssignedToYouSection";
+import WeekStrip from "./WeekStrip";
+import DashboardSidebar from "./DashboardSidebar";
 import { toast } from "sonner";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
@@ -188,6 +190,15 @@ export default function TaskOverview({
 
   const overdueCount = pastTasks.length;
 
+  function handleViewOverdue() {
+    setPastHidden(false);
+    setTimeout(() => {
+      document
+        .getElementById("past-tasks")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  }
+
   const taskItemProps = {
     categories,
     onToggled: handleTaskToggled,
@@ -200,145 +211,160 @@ export default function TaskOverview({
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="text-xl font-semibold text-gray-900">{t("overview_title")}</h1>
-        <button
-          onClick={() => setAddTaskOpen(true)}
-          className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover transition"
-        >
-          {t("overview_add_task")}
-        </button>
-      </div>
-
-      <OverdueBanner count={overdueCount} onRescheduleAll={handleRescheduleAllOverdue} />
-
-      <TodayHero
-        dateLabel={todayDateLabel}
-        tasks={todayTasks}
-        taskItemProps={taskItemProps}
-        onQuickAdd={handleTaskCreated}
-      />
-
-      {/* Category filter */}
-      {categories.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 lg:mx-0 lg:max-w-none lg:flex-1">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-xl font-semibold text-gray-900">{t("overview_title")}</h1>
           <button
-            onClick={() => setActiveCategoryId(null)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              activeCategoryId === null
-                ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            }`}
+            onClick={() => setAddTaskOpen(true)}
+            className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover transition"
           >
-            {t("all")}
+            {t("overview_add_task")}
           </button>
-          {categories.map((cat) => (
+        </div>
+
+        <WeekStrip tasks={tasks} teamTasks={teamTasks} />
+
+        <OverdueBanner count={overdueCount} onRescheduleAll={handleRescheduleAllOverdue} />
+
+        <TodayHero
+          dateLabel={todayDateLabel}
+          tasks={todayTasks}
+          taskItemProps={taskItemProps}
+          onQuickAdd={handleTaskCreated}
+        />
+
+        {/* Category filter — sidebar takes over on wide screens */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-2 lg:hidden">
             <button
-              key={cat.id}
-              onClick={() =>
-                setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)
-              }
+              onClick={() => setActiveCategoryId(null)}
               className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                activeCategoryId === cat.id
-                  ? (COLOR_CLASSES[cat.color as CategoryColor] ??
-                    "bg-gray-100 text-gray-600")
+                activeCategoryId === null
+                  ? "bg-gray-900 text-white"
                   : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               }`}
             >
-              {cat.name}
+              {t("all")}
             </button>
-          ))}
-        </div>
-      )}
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() =>
+                  setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)
+                }
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  activeCategoryId === cat.id
+                    ? (COLOR_CLASSES[cat.color as CategoryColor] ??
+                      "bg-gray-100 text-gray-600")
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* Upcoming tasks by date (today lives in the hero above) */}
-      {otherUpcomingDates.length > 0 && (
-        <div className="flex flex-col gap-8">
-          {otherUpcomingDates.map((dateStr) => {
-            const dateTasks = upcomingByDate[dateStr] ?? [];
+        {/* Upcoming tasks by date (today lives in the hero above) */}
+        {otherUpcomingDates.length > 0 && (
+          <div className="flex flex-col gap-8">
+            {otherUpcomingDates.map((dateStr) => {
+              const dateTasks = upcomingByDate[dateStr] ?? [];
 
-            return (
-              <div key={dateStr} className="flex flex-col gap-2.5">
-                <h2 className="text-sm font-medium text-gray-500">
-                  {formatDateLabel(dateStr)}
-                </h2>
-                <div className="flex flex-col gap-2.5">
-                  {dateTasks.map((task) => (
-                    <TaskItem key={task.id} task={task} {...taskItemProps} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Past tasks — divider-row toggle */}
-      {pastDates.length > 0 && (
-        <div className="flex flex-col gap-5">
-          <button
-            onClick={() => setPastHidden((v) => !v)}
-            className="group flex items-center gap-3"
-          >
-            <div className="h-px flex-1 bg-gray-200 transition group-hover:bg-gray-300" />
-            <span className="flex items-center gap-2 text-xs text-gray-400 transition group-hover:text-gray-600">
-              {t("overview_past")}
-              {overdueCount > 0 && (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                  {tpl("overview_overdue", { n: overdueCount })}
-                </span>
-              )}
-            </span>
-            <span className="text-xs text-gray-300 transition group-hover:text-gray-500">
-              {pastHidden ? "↓" : "↑"}
-            </span>
-            <div className="h-px flex-1 bg-gray-200 transition group-hover:bg-gray-300" />
-          </button>
-
-          {!pastHidden && (
-            <div className="flex flex-col gap-6">
-              {pastDates.map((dateStr) => (
+              return (
                 <div key={dateStr} className="flex flex-col gap-2.5">
-                  <h2 className="text-xs font-medium text-gray-400">
+                  <h2 className="text-sm font-medium text-gray-500">
                     {formatDateLabel(dateStr)}
                   </h2>
                   <div className="flex flex-col gap-2.5">
-                    {(pastByDate[dateStr] ?? []).map((task) => (
+                    {dateTasks.map((task) => (
                       <TaskItem key={task.id} task={task} {...taskItemProps} />
                     ))}
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Past tasks — divider-row toggle */}
+        {pastDates.length > 0 && (
+          <div id="past-tasks" className="flex scroll-mt-20 flex-col gap-5">
+            <button
+              onClick={() => setPastHidden((v) => !v)}
+              className="group flex items-center gap-3"
+            >
+              <div className="h-px flex-1 bg-gray-200 transition group-hover:bg-gray-300" />
+              <span className="flex items-center gap-2 text-xs text-gray-400 transition group-hover:text-gray-600">
+                {t("overview_past")}
+                {overdueCount > 0 && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                    {tpl("overview_overdue", { n: overdueCount })}
+                  </span>
+                )}
+              </span>
+              <span className="text-xs text-gray-300 transition group-hover:text-gray-500">
+                {pastHidden ? "↓" : "↑"}
+              </span>
+              <div className="h-px flex-1 bg-gray-200 transition group-hover:bg-gray-300" />
+            </button>
+
+            {!pastHidden && (
+              <div className="flex flex-col gap-6">
+                {pastDates.map((dateStr) => (
+                  <div key={dateStr} className="flex flex-col gap-2.5">
+                    <h2 className="text-xs font-medium text-gray-400">
+                      {formatDateLabel(dateStr)}
+                    </h2>
+                    <div className="flex flex-col gap-2.5">
+                      {(pastByDate[dateStr] ?? []).map((task) => (
+                        <TaskItem key={task.id} task={task} {...taskItemProps} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Undated tasks */}
+        {hasUndated && (
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-gray-100" />
+              <span className="text-xs font-medium text-gray-400">{t("undated_section")}</span>
+              <div className="h-px flex-1 bg-gray-100" />
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {undatedTasks.map((task) => (
+                <TaskItem key={task.id} task={task} {...taskItemProps} />
               ))}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Undated tasks */}
-      {hasUndated && (
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-100" />
-            <span className="text-xs font-medium text-gray-400">{t("undated_section")}</span>
-            <div className="h-px flex-1 bg-gray-100" />
           </div>
-          <div className="flex flex-col gap-2.5">
-            {undatedTasks.map((task) => (
-              <TaskItem key={task.id} task={task} {...taskItemProps} />
-            ))}
-          </div>
-        </div>
-      )}
+        )}
 
-      <AssignedToYouSection
-        upcomingDates={upcomingTeamDates}
-        upcomingByDate={upcomingTeamByDate}
-        pastDates={pastTeamDates}
-        pastByDate={pastTeamByDate}
-        undatedTasks={undatedTeamTasks}
-        formatDateLabel={formatDateLabel}
+        <AssignedToYouSection
+          upcomingDates={upcomingTeamDates}
+          upcomingByDate={upcomingTeamByDate}
+          pastDates={pastTeamDates}
+          pastByDate={pastTeamByDate}
+          undatedTasks={undatedTeamTasks}
+          formatDateLabel={formatDateLabel}
+        />
+      </div>
+
+      <DashboardSidebar
+        categories={categories}
+        activeCategoryId={activeCategoryId}
+        onCategoryChange={setActiveCategoryId}
+        tasks={tasks}
+        overdueTasks={pastTasks}
+        overdueCount={overdueCount}
+        onRescheduleAll={handleRescheduleAllOverdue}
+        onViewOverdue={handleViewOverdue}
       />
 
       {addTaskOpen && (
