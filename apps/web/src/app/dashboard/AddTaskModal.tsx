@@ -28,9 +28,11 @@ export default function AddTaskModal({
   const [notes, setNotes] = useState("");
   const [hasDate, setHasDate] = useState(true);
   const [date, setDate] = useState(
-    `${defaultDate.getFullYear()}-${String(defaultDate.getMonth() + 1).padStart(2, "0")}-${String(defaultDate.getDate()).padStart(2, "0")}`,
+    `${defaultDate.getUTCFullYear()}-${String(defaultDate.getUTCMonth() + 1).padStart(2, "0")}-${String(defaultDate.getUTCDate()).padStart(2, "0")}`,
   );
-  const [time, setTime] = useState("");
+  const [time, setTime] = useState(
+    () => `${String(new Date().getHours()).padStart(2, "0")}:00`,
+  );
   const [saving, setSaving] = useState(false);
 
   const [isEvent, setIsEvent] = useState(false);

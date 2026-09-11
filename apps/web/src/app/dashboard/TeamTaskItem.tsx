@@ -1,15 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Users, CalendarDays } from "lucide-react";
+import { Users, CalendarDays, Clock } from "lucide-react";
 import type { SerializedTeamTask } from "./WeekView";
 import { stripMarkdown } from "@/lib/strip-markdown";
+import { getLocalTodayStr } from "@/lib/date";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function TeamTaskItem({ task }: { task: SerializedTeamTask }) {
   const [done, setDone] = useState(task.done);
   const [loading, setLoading] = useState(false);
-  const { t } = useLanguage();
+  const { t, tpl } = useLanguage();
+
+  const overdueDays =
+    !done && !task.isEvent && task.date && task.date.slice(0, 10) < getLocalTodayStr()
+      ? Math.round(
+          (new Date(`${getLocalTodayStr()}T00:00:00Z`).getTime() -
+            new Date(`${task.date.slice(0, 10)}T00:00:00Z`).getTime()) /
+            86_400_000,
+        )
+      : 0;
 
   async function handleToggle() {
     const next = !done;
@@ -74,6 +84,14 @@ export default function TeamTaskItem({ task }: { task: SerializedTeamTask }) {
             >
               {stripMarkdown(task.notes)}
             </p>
+          )}
+          {overdueDays > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                <Clock size={8} />
+                {tpl("task_overdue_badge", { n: overdueDays })}
+              </span>
+            </div>
           )}
           <div className="mt-1.5 flex items-center gap-1">
             <Users

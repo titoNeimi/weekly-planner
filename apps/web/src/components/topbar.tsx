@@ -22,19 +22,23 @@ export default async function Topbar() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-6">
         <div className="flex items-center gap-4">
           <Link
             href={user ? "/dashboard" : "/"}
-            className="font-semibold text-gray-900 hover:text-gray-600 transition"
+            className="shrink-0 font-semibold text-gray-900 hover:text-gray-600 transition"
           >
             Weekly Planner
           </Link>
-          {user && <NavLinks />}
+          {user && (
+            <div className="hidden sm:block">
+              <NavLinks />
+            </div>
+          )}
         </div>
 
         {user ? (
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-4">
             <div className="flex items-center gap-2">
               <Avatar
                 avatarUrl={user.user_metadata.avatar_url}
@@ -50,6 +54,12 @@ export default async function Topbar() {
           </div>
         ) : (
           <SignInLink />
+        )}
+
+        {user && (
+          <div className="order-last w-full sm:hidden">
+            <NavLinks />
+          </div>
         )}
       </div>
     </header>

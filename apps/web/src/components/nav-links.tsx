@@ -15,12 +15,12 @@ export default function NavLinks() {
   ];
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex items-center gap-1 overflow-x-auto">
       {LINKS.map(({ href, label }) => (
         <Link
           key={href}
           href={href}
-          className={`rounded-md px-3 py-1.5 text-sm transition ${
+          className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition ${
             pathname === href
               ? "bg-gray-100 font-medium text-gray-900"
               : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"

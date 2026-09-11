@@ -40,6 +40,24 @@ const en = {
   overview_add_first: "Add your first task",
   overview_past: "Past",
   overview_overdue: "{n} overdue",
+  task_overdue_badge: "{n}d overdue",
+
+  // Today hero
+  hero_quick_add_placeholder: "Add a task for today…",
+  hero_add_button: "Add",
+  hero_task_count: "{n} tasks",
+  hero_empty_today: "Nothing planned for today.",
+  hero_quick_add_error: "Couldn't add that task. Try again.",
+
+  // Overdue banner
+  overdue_banner_message: "{n} tasks are overdue",
+  overdue_banner_action: "Move all to today",
+  overdue_banner_moving: "Moving…",
+  overdue_banner_success: "Moved {n} tasks to today",
+  overdue_banner_partial_error: "Couldn't move {n} of them — try again",
+
+  // Assigned to you (team tasks)
+  assigned_section_title: "Assigned to you",
 
   // Week View
   week_prev: "Previous week",

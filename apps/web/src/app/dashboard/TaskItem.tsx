@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2, CalendarDays } from "lucide-react";
+import { Pencil, Trash2, CalendarDays, Clock } from "lucide-react";
 import type { SerializedTask, SerializedCategory } from "./WeekView";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
 import { VIRTUAL_ID_PREFIX } from "@/lib/recurring-tasks";
 import { stripMarkdown } from "@/lib/strip-markdown";
+import { getLocalTodayStr } from "@/lib/date";
 import { RefreshCcw } from "lucide-react";
 import EditTaskModal from "./EditTaskModal";
 import EditSeriesModal from "./EditSeriesModal";
@@ -50,9 +51,18 @@ export default function TaskItem({
     "edit" | "delete" | null
   >(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-  const { t } = useLanguage();
+  const { t, tpl } = useLanguage();
 
   const isVirtual = task.id.startsWith(VIRTUAL_ID_PREFIX);
+
+  const overdueDays =
+    !task.done && !task.isEvent && task.date && task.date.slice(0, 10) < getLocalTodayStr()
+      ? Math.round(
+          (new Date(`${getLocalTodayStr()}T00:00:00Z`).getTime() -
+            new Date(`${task.date.slice(0, 10)}T00:00:00Z`).getTime()) /
+            86_400_000,
+        )
+      : 0;
 
   async function handleToggle() {
     const newDone = !task.done;
@@ -215,6 +225,12 @@ export default function TaskItem({
             </p>
           )}
           <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {overdueDays > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                <Clock size={8} />
+                {tpl("task_overdue_badge", { n: overdueDays })}
+              </span>
+            )}
             {task.isEvent && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                 <CalendarDays size={8} />

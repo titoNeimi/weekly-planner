@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import "./globals.css";
 import Topbar from "@/components/topbar";
+import Footer from "@/components/footer";
 import { UserProvider } from "@/context/UserContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { Toaster } from "sonner";
@@ -19,11 +20,12 @@ export default function RootLayout({
       lang="en"
       className={`h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-screen flex flex-col">
         <LanguageProvider>
           <UserProvider>
             <Topbar />
-            {children}
+            <div className="flex flex-1 flex-col">{children}</div>
+            <Footer />
             <Toaster position="bottom-right" richColors />
           </UserProvider>
         </LanguageProvider>

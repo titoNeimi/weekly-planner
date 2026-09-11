@@ -7,8 +7,11 @@ import type {
   SerializedTeamTask,
 } from "./WeekView";
 import TaskItem from "./TaskItem";
-import TeamTaskItem from "./TeamTaskItem";
 import AddTaskModal from "./AddTaskModal";
+import TodayHero from "./TodayHero";
+import OverdueBanner from "./OverdueBanner";
+import AssignedToYouSection from "./AssignedToYouSection";
+import { toast } from "sonner";
 import { COLOR_CLASSES } from "@/lib/category-colors";
 import type { CategoryColor } from "@/lib/category-colors";
 import { getLocalTodayStr } from "@/lib/date";
@@ -87,9 +90,10 @@ export default function TaskOverview({
     acc[d].push(t);
     return acc;
   }, {});
-  const pastDates = [
-    ...new Set([...Object.keys(pastByDate), ...Object.keys(pastTeamByDate)]),
-  ].sort((a, b) => b.localeCompare(a));
+  const pastDates = Object.keys(pastByDate).sort((a, b) => b.localeCompare(a));
+  const pastTeamDates = Object.keys(pastTeamByDate).sort((a, b) =>
+    b.localeCompare(a),
+  );
 
   const upcomingByDate = upcomingTasks.reduce<Record<string, SerializedTask[]>>(
     (acc, t) => {
@@ -108,18 +112,19 @@ export default function TaskOverview({
     acc[d].push(t);
     return acc;
   }, {});
-  const upcomingDates = [
-    ...new Set([
-      ...Object.keys(upcomingByDate),
-      ...Object.keys(upcomingTeamByDate),
-    ]),
-  ].sort();
+  const upcomingDates = Object.keys(upcomingByDate).sort();
+  const upcomingTeamDates = Object.keys(upcomingTeamByDate).sort();
 
-  const todayTaskCount =
-    (upcomingByDate[today] ?? []).length +
-    (upcomingTeamByDate[today] ?? []).length;
+  const todayTasks = upcomingByDate[today] ?? [];
+  const otherUpcomingDates = upcomingDates.filter((d) => d !== today);
 
-  const hasUndated = undatedTasks.length > 0 || undatedTeamTasks.length > 0;
+  const daysLong = ta("days_long");
+  const months = ta("months");
+  const todayDateObj = new Date(`${today}T00:00:00Z`);
+  const todayDayIdx = (todayDateObj.getUTCDay() + 6) % 7;
+  const todayDateLabel = `${daysLong[todayDayIdx]}, ${months[todayDateObj.getUTCMonth()]} ${todayDateObj.getUTCDate()}`;
+
+  const hasUndated = undatedTasks.length > 0;
 
   function handleTaskCreated(task: SerializedTask) {
     setTasks((prev) => [...prev, task]);
@@ -158,7 +163,30 @@ export default function TaskOverview({
     setCategories((prev) => [...prev, cat]);
   }
 
-  const overdueCount = pastTasks.length + pastTeamTasks.length;
+  async function handleRescheduleAllOverdue() {
+    const todayStr = getLocalTodayStr();
+    const results = await Promise.allSettled(
+      pastTasks.map(async (task) => {
+        const time = task.date.slice(11, 16);
+        const res = await fetch(`/api/task/${task.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: todayStr, time }),
+        });
+        if (!res.ok) throw new Error("Failed to reschedule");
+        const updated: SerializedTask = await res.json();
+        handleTaskReplaced(task.id, updated);
+      }),
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      toast.error(tpl("overdue_banner_partial_error", { n: failed }));
+    } else {
+      toast.success(tpl("overdue_banner_success", { n: pastTasks.length }));
+    }
+  }
+
+  const overdueCount = pastTasks.length;
 
   const taskItemProps = {
     categories,
@@ -171,21 +199,11 @@ export default function TaskOverview({
     onSeriesUpdated: handleSeriesUpdated,
   };
 
-  const isEmpty =
-    upcomingDates.length === 0 && pastDates.length === 0 && !hasUndated;
-
   return (
     <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{t("overview_title")}</h1>
-          {todayTaskCount > 0 && (
-            <p className="mt-0.5 text-sm text-gray-400">
-              {tpl("overview_for_today", { n: todayTaskCount })}
-            </p>
-          )}
-        </div>
+        <h1 className="text-xl font-semibold text-gray-900">{t("overview_title")}</h1>
         <button
           onClick={() => setAddTaskOpen(true)}
           className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover transition"
@@ -193,6 +211,15 @@ export default function TaskOverview({
           {t("overview_add_task")}
         </button>
       </div>
+
+      <OverdueBanner count={overdueCount} onRescheduleAll={handleRescheduleAllOverdue} />
+
+      <TodayHero
+        dateLabel={todayDateLabel}
+        tasks={todayTasks}
+        taskItemProps={taskItemProps}
+        onQuickAdd={handleTaskCreated}
+      />
 
       {/* Category filter */}
       {categories.length > 0 && (
@@ -226,39 +253,11 @@ export default function TaskOverview({
         </div>
       )}
 
-      {/* Upcoming tasks by date */}
-      {upcomingDates.length > 0 ? (
+      {/* Upcoming tasks by date (today lives in the hero above) */}
+      {otherUpcomingDates.length > 0 && (
         <div className="flex flex-col gap-8">
-          {upcomingDates.map((dateStr) => {
-            const isToday = dateStr === today;
+          {otherUpcomingDates.map((dateStr) => {
             const dateTasks = upcomingByDate[dateStr] ?? [];
-            const dateTeamTasks = upcomingTeamByDate[dateStr] ?? [];
-
-            if (isToday) {
-              return (
-                <div
-                  key={dateStr}
-                  className="flex flex-col gap-3 rounded-xl bg-primary-light px-4 py-3"
-                >
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-semibold text-primary">
-                      {t("overview_today")}
-                    </h2>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-primary">
-                      {dateTasks.length + dateTeamTasks.length}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-2.5">
-                    {dateTasks.map((task) => (
-                      <TaskItem key={task.id} task={task} {...taskItemProps} />
-                    ))}
-                    {dateTeamTasks.map((task) => (
-                      <TeamTaskItem key={task.id} task={task} />
-                    ))}
-                  </div>
-                </div>
-              );
-            }
 
             return (
               <div key={dateStr} className="flex flex-col gap-2.5">
@@ -269,26 +268,11 @@ export default function TaskOverview({
                   {dateTasks.map((task) => (
                     <TaskItem key={task.id} task={task} {...taskItemProps} />
                   ))}
-                  {dateTeamTasks.map((task) => (
-                    <TeamTaskItem key={task.id} task={task} />
-                  ))}
                 </div>
               </div>
             );
           })}
         </div>
-      ) : (
-        !hasUndated && pastDates.length === 0 && (
-          <div className="py-16 text-center">
-            <p className="text-sm text-gray-400">{t("overview_nothing_planned")}</p>
-            <button
-              onClick={() => setAddTaskOpen(true)}
-              className="mt-3 text-sm text-primary hover:underline transition"
-            >
-              {t("overview_add_first")}
-            </button>
-          </div>
-        )
       )}
 
       {/* Past tasks — divider-row toggle */}
@@ -324,9 +308,6 @@ export default function TaskOverview({
                     {(pastByDate[dateStr] ?? []).map((task) => (
                       <TaskItem key={task.id} task={task} {...taskItemProps} />
                     ))}
-                    {(pastTeamByDate[dateStr] ?? []).map((task) => (
-                      <TeamTaskItem key={task.id} task={task} />
-                    ))}
                   </div>
                 </div>
               ))}
@@ -347,28 +328,22 @@ export default function TaskOverview({
             {undatedTasks.map((task) => (
               <TaskItem key={task.id} task={task} {...taskItemProps} />
             ))}
-            {undatedTeamTasks.map((task) => (
-              <TeamTaskItem key={task.id} task={task} />
-            ))}
           </div>
         </div>
       )}
 
-      {isEmpty && (
-        <div className="py-16 text-center">
-          <p className="text-sm text-gray-400">{t("overview_nothing_planned")}</p>
-          <button
-            onClick={() => setAddTaskOpen(true)}
-            className="mt-3 text-sm text-primary hover:underline transition"
-          >
-            {t("overview_add_first")}
-          </button>
-        </div>
-      )}
+      <AssignedToYouSection
+        upcomingDates={upcomingTeamDates}
+        upcomingByDate={upcomingTeamByDate}
+        pastDates={pastTeamDates}
+        pastByDate={pastTeamByDate}
+        undatedTasks={undatedTeamTasks}
+        formatDateLabel={formatDateLabel}
+      />
 
       {addTaskOpen && (
         <AddTaskModal
-          defaultDate={new Date()}
+          defaultDate={new Date(`${getLocalTodayStr()}T00:00:00.000Z`)}
           onClose={() => setAddTaskOpen(false)}
           onSaved={handleTaskCreated}
           categories={categories}

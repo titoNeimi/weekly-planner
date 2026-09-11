@@ -42,6 +42,24 @@ const es: Dict = {
   overview_add_first: "Añade tu primera tarea",
   overview_past: "Pasado",
   overview_overdue: "{n} atrasada{s}",
+  task_overdue_badge: "{n}d de atraso",
+
+  // Today hero
+  hero_quick_add_placeholder: "Añade una tarea para hoy…",
+  hero_add_button: "Añadir",
+  hero_task_count: "{n} tareas",
+  hero_empty_today: "Nada planificado para hoy.",
+  hero_quick_add_error: "No se pudo añadir la tarea. Inténtalo de nuevo.",
+
+  // Overdue banner
+  overdue_banner_message: "{n} tareas atrasadas",
+  overdue_banner_action: "Mover todo a hoy",
+  overdue_banner_moving: "Moviendo…",
+  overdue_banner_success: "Se movieron {n} tareas a hoy",
+  overdue_banner_partial_error: "No se pudieron mover {n} — inténtalo de nuevo",
+
+  // Assigned to you (team tasks)
+  assigned_section_title: "Asignadas a ti",
 
   // Week View
   week_prev: "Semana anterior",
