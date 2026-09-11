@@ -6,6 +6,7 @@ import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Avatar from "@/components/avatar";
 import { useLanguage } from "@/context/LanguageContext";
+import { undoableAction } from "@/lib/undo-toast";
 
 import TeamTaskModal, { type TeamTaskData } from "./TeamTaskModal";
 import TeamTaskDetailModal from "./TeamTaskDetailModal";
@@ -56,7 +57,6 @@ export default function TeamTasksSection({
   const [detailTask, setDetailTask] = useState<TeamTaskData | null>(null);
   const [modalTask, setModalTask] = useState<TeamTaskData | "new" | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { t, lang } = useLanguage();
 
   const locale = lang === "es" ? "es-ES" : "en-US";
@@ -137,21 +137,24 @@ export default function TeamTasksSection({
     }
   }
 
-  async function deleteTask(task: TeamTaskData) {
-    setDeletingId(task.id);
+  function deleteTask(task: TeamTaskData) {
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
-    try {
-      const res = await fetch(`/api/team/${teamId}/task/${task.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error();
-      toast.success(t("task_deleted"));
-    } catch {
-      setTasks((prev) => [...prev, task]);
-      toast.error("Failed to delete task");
-    } finally {
-      setDeletingId(null);
-    }
+    undoableAction({
+      message: t("task_deleted"),
+      undoLabel: t("toast_undo"),
+      commit: async () => {
+        try {
+          const res = await fetch(`/api/team/${teamId}/task/${task.id}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) throw new Error();
+        } catch {
+          setTasks((prev) => [...prev, task]);
+          toast.error("Failed to delete task");
+        }
+      },
+      rollback: () => setTasks((prev) => [...prev, task]),
+    });
   }
 
   function handleSaved(saved: TeamTaskData) {
@@ -165,11 +168,11 @@ export default function TeamTasksSection({
 
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
-          <h2 className="shrink-0 text-sm font-semibold text-gray-900">
+      <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+          <h2 className="shrink-0 text-sm font-semibold text-gray-900 dark:text-gray-100">
             {t("team_tab_tasks")}{" "}
-            <span className="font-normal text-gray-400">
+            <span className="font-normal text-gray-400 dark:text-gray-500">
               ({displayTasks.length})
             </span>
           </h2>
@@ -183,13 +186,13 @@ export default function TeamTasksSection({
         </div>
 
         {/* Assignee filter chips */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-gray-50 px-5 py-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-gray-50 dark:border-gray-900 px-5 py-3">
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               filter === "all"
-                ? "bg-gray-900 text-white"
-                : "border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-800"
+                ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+                : "border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
             }`}
           >
             {t("all")}
@@ -198,8 +201,8 @@ export default function TeamTasksSection({
             onClick={() => setFilter("unassigned")}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               filter === "unassigned"
-                ? "bg-gray-900 text-white"
-                : "border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-800"
+                ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+                : "border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
             }`}
           >
             {t("team_tasks_no_one")}
@@ -229,15 +232,15 @@ export default function TeamTasksSection({
           </div>
         ) : displayTasks.length === 0 ? (
           <div className="px-5 py-8 text-center">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400 dark:text-gray-500">
               {filter === "all" ? t("team_tasks_empty") : t("team_tasks_empty_filter")}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-800">
             {undatedTasks.length > 0 && (
               <div>
-                <p className="px-5 pb-1 pt-3 text-xs font-medium text-gray-400">
+                <p className="px-5 pb-1 pt-3 text-xs font-medium text-gray-400 dark:text-gray-500">
                   {t("undated_section")}
                 </p>
                 <ul className="pb-2">
@@ -250,7 +253,7 @@ export default function TeamTasksSection({
                         key={task.id}
                         onClick={() => setDetailTask(task)}
                         className={`group flex cursor-pointer items-center gap-3 px-5 py-2 transition ${
-                          task.isEvent ? "hover:bg-amber-50" : "hover:bg-gray-50"
+                          task.isEvent ? "hover:bg-amber-50" : "hover:bg-gray-50 dark:hover:bg-gray-800"
                         }`}
                       >
                         {task.isEvent ? (
@@ -260,18 +263,18 @@ export default function TeamTasksSection({
                             onClick={(e) => { e.stopPropagation(); toggleDone(task); }}
                             disabled={togglingId === task.id}
                             aria-label={task.done ? t("task_mark_incomplete") : t("task_mark_complete")}
-                            className={`h-4 w-4 shrink-0 cursor-pointer rounded border transition disabled:opacity-50 ${task.done ? "border-primary bg-primary" : "border-gray-200 bg-white hover:border-primary"}`}
+                            className={`h-4 w-4 shrink-0 cursor-pointer rounded border transition disabled:opacity-50 ${task.done ? "border-primary bg-primary" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-primary"}`}
                           />
                         )}
-                        <p className={`min-w-0 flex-1 truncate text-sm font-medium ${task.done && !task.isEvent ? "text-gray-300 line-through" : task.isEvent ? "text-amber-900" : "text-gray-800"}`}>
+                        <p className={`min-w-0 flex-1 truncate text-sm font-medium ${task.done && !task.isEvent ? "text-gray-300 dark:text-gray-600 line-through" : task.isEvent ? "text-amber-900" : "text-gray-800 dark:text-gray-200"}`}>
                           {task.title}
                         </p>
                         <div className="invisible flex shrink-0 items-center gap-1 group-hover:visible">
-                          <button onClick={(e) => { e.stopPropagation(); setModalTask(task); }} aria-label={t("task_edit")} className="cursor-pointer text-gray-300 transition hover:text-gray-500">
+                          <button onClick={(e) => { e.stopPropagation(); setModalTask(task); }} aria-label={t("task_edit")} className="cursor-pointer text-gray-300 dark:text-gray-600 transition hover:text-gray-500 dark:hover:text-gray-400">
                             <Pencil size={13} />
                           </button>
                           {canDelete(task) && (
-                            <button onClick={(e) => { e.stopPropagation(); deleteTask(task); }} disabled={deletingId === task.id} aria-label={t("task_delete")} className="cursor-pointer text-gray-300 transition hover:text-red-400 disabled:opacity-40">
+                            <button onClick={(e) => { e.stopPropagation(); deleteTask(task); }} aria-label={t("task_delete")} className="cursor-pointer text-gray-300 dark:text-gray-600 transition hover:text-red-400 disabled:opacity-40">
                               <Trash2 size={13} />
                             </button>
                           )}
@@ -284,7 +287,7 @@ export default function TeamTasksSection({
             )}
             {groups.map(({ label, key, tasks: groupTasks }) => (
               <div key={key}>
-                <p className="px-5 pb-1 pt-3 text-xs font-medium text-gray-400">
+                <p className="px-5 pb-1 pt-3 text-xs font-medium text-gray-400 dark:text-gray-500">
                   {label}
                 </p>
                 <ul className="pb-2">
@@ -297,7 +300,7 @@ export default function TeamTasksSection({
                         key={task.id}
                         onClick={() => setDetailTask(task)}
                         className={`group flex cursor-pointer items-center gap-3 px-5 py-2 transition ${
-                          task.isEvent ? "hover:bg-amber-50" : "hover:bg-gray-50"
+                          task.isEvent ? "hover:bg-amber-50" : "hover:bg-gray-50 dark:hover:bg-gray-800"
                         }`}
                       >
                         {task.isEvent ? (
@@ -317,17 +320,17 @@ export default function TeamTasksSection({
                             className={`h-4 w-4 shrink-0 cursor-pointer rounded border transition disabled:opacity-50 ${
                               task.done
                                 ? "border-primary bg-primary"
-                                : "border-gray-200 bg-white hover:border-primary"
+                                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-primary"
                             }`}
                           />
                         )}
                         <p
                           className={`min-w-0 flex-1 truncate text-sm font-medium ${
                             task.done && !task.isEvent
-                              ? "text-gray-300 line-through"
+                              ? "text-gray-300 dark:text-gray-600 line-through"
                               : task.isEvent
                                 ? "text-amber-900"
-                                : "text-gray-800"
+                                : "text-gray-800 dark:text-gray-200"
                           }`}
                         >
                           {task.title}
@@ -337,12 +340,12 @@ export default function TeamTasksSection({
                           return cat ? (
                             <span
                               title={cat.name}
-                              className={`h-2 w-2 shrink-0 rounded-full ${SWATCH_CLASSES[cat.color as CategoryColor] ?? "bg-gray-300"}`}
+                              className={`h-2 w-2 shrink-0 rounded-full ${SWATCH_CLASSES[cat.color as CategoryColor] ?? "bg-gray-300 dark:bg-gray-600"}`}
                             />
                           ) : null;
                         })()}
                         {task.notes && (
-                          <span className="hidden shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-400 sm:inline">
+                          <span className="hidden shrink-0 rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-400 dark:text-gray-500 sm:inline">
                             note
                           </span>
                         )}
@@ -366,7 +369,7 @@ export default function TeamTasksSection({
                               setModalTask(task);
                             }}
                             aria-label={t("task_edit")}
-                            className="cursor-pointer text-gray-300 transition hover:text-gray-500"
+                            className="cursor-pointer text-gray-300 dark:text-gray-600 transition hover:text-gray-500 dark:hover:text-gray-400"
                           >
                             <Pencil size={13} />
                           </button>
@@ -376,9 +379,8 @@ export default function TeamTasksSection({
                                 e.stopPropagation();
                                 deleteTask(task);
                               }}
-                              disabled={deletingId === task.id}
                               aria-label={t("task_delete")}
-                              className="cursor-pointer text-gray-300 transition hover:text-red-400 disabled:opacity-40"
+                              className="cursor-pointer text-gray-300 dark:text-gray-600 transition hover:text-red-400 disabled:opacity-40"
                             >
                               <Trash2 size={13} />
                             </button>

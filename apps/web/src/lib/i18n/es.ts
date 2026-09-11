@@ -28,6 +28,7 @@ const es: Dict = {
   search_hint: "Escribe para buscar tus tareas…",
   search_loading: "Buscando…",
   search_no_results: "No se encontraron tareas",
+  search_no_results_for: 'Sin resultados para "{q}"',
 
   // Common
   cancel: "Cancelar",
@@ -38,6 +39,8 @@ const es: Dict = {
   close: "Cerrar",
   ok: "OK",
   all: "Todo",
+  toast_undo: "Deshacer",
+  toast_undone: "Deshecho",
 
   // Task Overview
   overview_title: "Tareas",
@@ -47,6 +50,7 @@ const es: Dict = {
   overview_tomorrow: "Mañana",
   overview_nothing_planned: "Nada planificado aún.",
   overview_add_first: "Añade tu primera tarea",
+  overview_filtered_empty: "No hay tareas de {category}. Prueba otra categoría o quita el filtro.",
   overview_past: "Pasado",
   overview_overdue: "{n} atrasada{s}",
   task_overdue_badge: "{n}d de atraso",
@@ -61,7 +65,9 @@ const es: Dict = {
   hero_add_button: "Añadir",
   hero_task_count: "{n} tareas",
   hero_empty_today: "Nada planificado para hoy.",
+  hero_empty_today_filtered: "No hay tareas de {category} para hoy.",
   hero_quick_add_error: "No se pudo añadir la tarea. Inténtalo de nuevo.",
+  hero_tomorrow_button: "Añadir para mañana",
 
   // Overdue banner
   overdue_banner_message: "{n} tareas atrasadas",
@@ -94,6 +100,7 @@ const es: Dict = {
 
   // Day Column
   day_nothing_planned: "Nada planificado",
+  day_nothing_planned_today: "Nada planificado — disfruta el día.",
   day_add_task: "+ Añadir tarea",
 
   // Day Timeline
@@ -195,9 +202,13 @@ const es: Dict = {
   cat_new: "+ Nueva categoría…",
   cat_rename: "Renombrar",
   cat_remove: "Eliminar",
+  cat_pin: "Fijar",
+  cat_unpin: "Desfijar",
   cat_renamed: "Categoría renombrada",
   cat_deleted: "Categoría eliminada",
   cat_created: "Categoría creada",
+  cat_pinned: "Categoría fijada",
+  cat_unpinned: "Categoría desfijada",
 
   // Teams list
   teams_title: "Equipos",
@@ -307,6 +318,19 @@ const es: Dict = {
   invite_retry: "Reintentar",
   invite_go_dashboard: "Ir al inicio",
   invite_error_join: "Algo salió mal. Inténtalo de nuevo.",
+
+  // Settings
+  settings_title: "Ajustes",
+  settings_week_start: "La semana empieza en",
+  settings_monday: "Lun",
+  settings_sunday: "Dom",
+  settings_density: "Densidad",
+  settings_comfortable: "Cómoda",
+  settings_compact: "Compacta",
+  settings_theme: "Tema",
+  settings_theme_light: "Claro",
+  settings_theme_dark: "Oscuro",
+  settings_theme_system: "Sistema",
 
   // Days (short, 1-letter, long)
   days_short: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],

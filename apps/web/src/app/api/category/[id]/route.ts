@@ -12,11 +12,14 @@ export async function PATCH(
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { name } = await request.json();
+  const { name, pinned } = await request.json();
 
   await prisma.category.update({
     where: { id, userId: user.id },
-    data: { name },
+    data: {
+      ...(name !== undefined && { name }),
+      ...(pinned !== undefined && { pinned }),
+    },
   });
 
   return new Response(null, { status: 204 });

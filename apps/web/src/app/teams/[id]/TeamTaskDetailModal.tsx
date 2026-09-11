@@ -80,42 +80,42 @@ export default function TeamTaskDetailModal({
 
   const components: Components = {
     h1: ({ children }) => (
-      <h1 className="mb-3 mt-6 text-lg font-bold text-gray-900 first:mt-0">
+      <h1 className="mb-3 mt-6 text-lg font-bold text-gray-900 dark:text-gray-100 first:mt-0">
         {children}
       </h1>
     ),
     h2: ({ children }) => (
-      <h2 className="mb-2 mt-5 text-base font-semibold text-gray-900 first:mt-0">
+      <h2 className="mb-2 mt-5 text-base font-semibold text-gray-900 dark:text-gray-100 first:mt-0">
         {children}
       </h2>
     ),
     h3: ({ children }) => (
-      <h3 className="mb-2 mt-4 text-sm font-semibold text-gray-800 first:mt-0">
+      <h3 className="mb-2 mt-4 text-sm font-semibold text-gray-800 dark:text-gray-200 first:mt-0">
         {children}
       </h3>
     ),
     p: ({ children }) => (
-      <p className="mb-3 text-sm leading-relaxed text-gray-700 last:mb-0">
+      <p className="mb-3 text-sm leading-relaxed text-gray-700 dark:text-gray-300 last:mb-0">
         {children}
       </p>
     ),
     ul: ({ children }) => (
-      <ul className="mb-3 list-disc space-y-1 pl-5 text-sm text-gray-700 last:mb-0">
+      <ul className="mb-3 list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300 last:mb-0">
         {children}
       </ul>
     ),
     ol: ({ children }) => (
-      <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-gray-700 last:mb-0">
+      <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300 last:mb-0">
         {children}
       </ol>
     ),
     li: ({ children }) => <li className="leading-relaxed">{children}</li>,
     strong: ({ children }) => (
-      <strong className="font-semibold text-gray-900">{children}</strong>
+      <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>
     ),
-    em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
+    em: ({ children }) => <em className="italic text-gray-700 dark:text-gray-300">{children}</em>,
     blockquote: ({ children }) => (
-      <blockquote className="mb-3 border-l-4 border-gray-300 pl-3 italic text-gray-500">
+      <blockquote className="mb-3 border-l-4 border-gray-300 dark:border-gray-600 pl-3 italic text-gray-500 dark:text-gray-400">
         {children}
       </blockquote>
     ),
@@ -124,13 +124,13 @@ export default function TeamTaskDetailModal({
         return <code className={className}>{children}</code>;
       }
       return (
-        <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs text-gray-800">
+        <code className="rounded bg-gray-200 dark:bg-gray-700 px-1 py-0.5 font-mono text-xs text-gray-800 dark:text-gray-200">
           {children}
         </code>
       );
     },
     pre: ({ children }) => (
-      <pre className="mb-3 overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs last:mb-0">
+      <pre className="mb-3 overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100 last:mb-0">
         {children}
       </pre>
     ),
@@ -140,12 +140,12 @@ export default function TeamTaskDetailModal({
       </div>
     ),
     th: ({ children }) => (
-      <th className="border border-gray-200 bg-gray-100 px-3 py-2 text-left text-xs font-semibold text-gray-900">
+      <th className="border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-left text-xs font-semibold text-gray-900 dark:text-gray-100">
         {children}
       </th>
     ),
     td: ({ children }) => (
-      <td className="border border-gray-200 px-3 py-2 text-xs text-gray-700">
+      <td className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
         {children}
       </td>
     ),
@@ -159,7 +159,7 @@ export default function TeamTaskDetailModal({
         {children}
       </a>
     ),
-    hr: () => <hr className="my-4 border-gray-200" />,
+    hr: () => <hr className="my-4 border-gray-200 dark:border-gray-700" />,
     input: ({ type, checked }) => {
       if (type !== "checkbox") return null;
       return (
@@ -186,18 +186,18 @@ export default function TeamTaskDetailModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="flex w-full max-w-2xl flex-col gap-4 rounded-2xl bg-white p-6 shadow-xl">
+      <div className="flex w-full max-w-2xl flex-col gap-4 rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-2">
             <div
               className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                task.isEvent ? "bg-amber-400" : task.done ? "bg-gray-300" : "bg-gray-800"
+                task.isEvent ? "bg-amber-400" : task.done ? "bg-gray-300 dark:bg-gray-600" : "bg-gray-800 dark:bg-gray-300"
               }`}
             />
             <h2
               className={`wrap-break-word text-base font-semibold leading-snug ${
-                task.done ? "text-gray-400 line-through" : "text-gray-900"
+                task.done ? "text-gray-400 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100"
               }`}
             >
               {task.title}
@@ -209,7 +209,7 @@ export default function TeamTaskDetailModal({
                 onClick={onToggle}
                 className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition ${
                   task.done
-                    ? "border-gray-200 text-gray-400 hover:bg-gray-50"
+                    ? "border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
                     : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
                 }`}
               >
@@ -219,7 +219,7 @@ export default function TeamTaskDetailModal({
             )}
             <button
               onClick={onEdit}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-600 transition hover:bg-gray-50"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               <Pencil size={11} />
               {t("team_task_detail_edit")}
@@ -227,7 +227,7 @@ export default function TeamTaskDetailModal({
             <button
               onClick={onClose}
               aria-label={t("close")}
-              className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              className="rounded-md p-1 text-gray-400 dark:text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300"
             >
               ✕
             </button>
@@ -235,8 +235,8 @@ export default function TeamTaskDetailModal({
         </div>
 
         {/* Meta */}
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          <span>{dateLabel ?? <span className="italic text-gray-400">{t("no_date")}</span>}</span>
+        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+          <span>{dateLabel ?? <span className="italic text-gray-400 dark:text-gray-500">{t("no_date")}</span>}</span>
           {assignee && (
             <div className="flex items-center gap-1.5">
               <Avatar
@@ -252,7 +252,7 @@ export default function TeamTaskDetailModal({
         {notes ? (
           <div
             data-notes="true"
-            className="max-h-[60vh] overflow-y-auto rounded-lg bg-gray-50 px-4 py-3"
+            className="max-h-[60vh] overflow-y-auto rounded-lg bg-gray-50 dark:bg-gray-950 px-4 py-3"
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -263,7 +263,7 @@ export default function TeamTaskDetailModal({
             </ReactMarkdown>
           </div>
         ) : (
-          <p className="text-xs italic text-gray-400">{t("team_task_detail_no_notes")}</p>
+          <p className="text-xs italic text-gray-400 dark:text-gray-500">{t("team_task_detail_no_notes")}</p>
         )}
       </div>
     </div>

@@ -26,6 +26,7 @@ const en = {
   search_hint: "Type to search your tasks…",
   search_loading: "Searching…",
   search_no_results: "No matching tasks",
+  search_no_results_for: 'No results for "{q}"',
 
   // Common
   cancel: "Cancel",
@@ -36,6 +37,8 @@ const en = {
   close: "Close",
   ok: "OK",
   all: "All",
+  toast_undo: "Undo",
+  toast_undone: "Undone",
 
   // Task Overview
   overview_title: "Tasks",
@@ -45,6 +48,7 @@ const en = {
   overview_tomorrow: "Tomorrow",
   overview_nothing_planned: "Nothing planned yet.",
   overview_add_first: "Add your first task",
+  overview_filtered_empty: "No {category} tasks scheduled. Try another category or clear the filter.",
   overview_past: "Past",
   overview_overdue: "{n} overdue",
   task_overdue_badge: "{n}d overdue",
@@ -59,7 +63,9 @@ const en = {
   hero_add_button: "Add",
   hero_task_count: "{n} tasks",
   hero_empty_today: "Nothing planned for today.",
+  hero_empty_today_filtered: "No {category} tasks today.",
   hero_quick_add_error: "Couldn't add that task. Try again.",
+  hero_tomorrow_button: "Add for tomorrow",
 
   // Overdue banner
   overdue_banner_message: "{n} tasks are overdue",
@@ -92,6 +98,7 @@ const en = {
 
   // Day Column
   day_nothing_planned: "Nothing planned",
+  day_nothing_planned_today: "Nothing planned — enjoy the day.",
   day_add_task: "+ Add task",
 
   // Day Timeline
@@ -193,9 +200,13 @@ const en = {
   cat_new: "+ New category…",
   cat_rename: "Rename",
   cat_remove: "Remove",
+  cat_pin: "Pin",
+  cat_unpin: "Unpin",
   cat_renamed: "Category renamed",
   cat_deleted: "Category deleted",
   cat_created: "Category created",
+  cat_pinned: "Category pinned",
+  cat_unpinned: "Category unpinned",
 
   // Teams list
   teams_title: "Teams",
@@ -305,6 +316,19 @@ const en = {
   invite_retry: "Retry",
   invite_go_dashboard: "Go to Dashboard",
   invite_error_join: "Something went wrong. Please try again.",
+
+  // Settings
+  settings_title: "Settings",
+  settings_week_start: "Week starts on",
+  settings_monday: "Mon",
+  settings_sunday: "Sun",
+  settings_density: "Density",
+  settings_comfortable: "Comfortable",
+  settings_compact: "Compact",
+  settings_theme: "Theme",
+  settings_theme_light: "Light",
+  settings_theme_dark: "Dark",
+  settings_theme_system: "System",
 
   // Days (short, 1-letter, long)
   days_short: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],

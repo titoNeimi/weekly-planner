@@ -75,19 +75,19 @@ export default function EditSeriesModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={handleBackdrop}
     >
-      <div className="w-full max-w-md mx-4 sm:mx-auto rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
+      <div className="w-full max-w-md mx-4 sm:mx-auto rounded-2xl bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-xl">
         <div className="mb-5 flex items-start justify-between">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               {t("edit_series_heading")}
             </h2>
-            <p className="mt-0.5 text-xs text-gray-400">
+            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
               {t("edit_series_subtitle")}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+            className="rounded-md p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition"
             aria-label={t("close")}
           >
             ✕
@@ -96,18 +96,18 @@ export default function EditSeriesModal({
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-600">{t("edit_task_label_title")}</label>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("edit_task_label_title")}</label>
             <input
               autoFocus
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
+              className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-600">
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
               {t("edit_task_label_category")}
             </label>
             <CategorySelect
@@ -118,12 +118,12 @@ export default function EditSeriesModal({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-600">{t("edit_task_label_notes")}</label>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("edit_task_label_notes")}</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
+              className="resize-none rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
             />
           </div>
 
@@ -131,7 +131,7 @@ export default function EditSeriesModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 transition"
+              className="rounded-lg px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             >
               {t("cancel")}
             </button>

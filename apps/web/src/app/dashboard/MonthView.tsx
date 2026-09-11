@@ -11,46 +11,30 @@ import TaskDetailModal from "./TaskDetailModal";
 import { stripMarkdown } from "@/lib/strip-markdown";
 import { toast } from "sonner";
 import { getLocalTodayStr } from "@/lib/date";
+import { monthGridCells, rotateForWeekStart } from "@/lib/week";
+import type { WeekStartsOn } from "@/lib/week";
 import { useLanguage } from "@/context/LanguageContext";
+import { undoableAction } from "@/lib/undo-toast";
 
 function getCurrentMonthStart(): Date {
   const now = new Date();
   return new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
 }
 
-function getMonthCells(monthStart: Date): Date[] {
-  const year = monthStart.getUTCFullYear();
-  const month = monthStart.getUTCMonth();
-  const firstDay = monthStart.getUTCDay();
-  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
-  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-
-  const cells: Date[] = [];
-  for (let i = startOffset; i > 0; i--) {
-    cells.push(new Date(Date.UTC(year, month, 1 - i)));
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    cells.push(new Date(Date.UTC(year, month, i)));
-  }
-  const remaining = (7 - (cells.length % 7)) % 7;
-  for (let i = 1; i <= remaining; i++) {
-    cells.push(new Date(Date.UTC(year, month + 1, i)));
-  }
-  return cells;
-}
-
 export default function MonthView({
   categories,
   activeCategoryId,
   onCategoryCreated,
+  weekStartsOn = 1,
 }: {
   categories: SerializedCategory[];
   activeCategoryId: string | null;
   onCategoryCreated: (category: SerializedCategory) => void;
+  weekStartsOn?: WeekStartsOn;
 }) {
   const { t, ta } = useLanguage();
-  const DAY_LABELS = ta("days_short");
-  const DAY_LABELS_SHORT = ta("days_letter");
+  const DAY_LABELS = rotateForWeekStart(ta("days_short"), weekStartsOn);
+  const DAY_LABELS_SHORT = rotateForWeekStart(ta("days_letter"), weekStartsOn);
   const MONTH_NAMES = ta("months");
 
   const [monthStart, setMonthStart] = useState(getCurrentMonthStart);
@@ -86,10 +70,17 @@ export default function MonthView({
     setFetching(false);
   }
 
-  async function handleDelete(id: string) {
+  function handleDelete(id: string) {
+    const removed = tasks.find((t) => t.id === id);
     setTasks((prev) => prev.filter((t) => t.id !== id));
-    await fetch(`/api/task/${id}`, { method: "DELETE" });
-    toast.success(t("task_deleted"));
+    undoableAction({
+      message: t("task_deleted"),
+      undoLabel: t("toast_undo"),
+      commit: () => fetch(`/api/task/${id}`, { method: "DELETE" }),
+      rollback: () => {
+        if (removed) setTasks((prev) => [...prev, removed]);
+      },
+    });
   }
 
   async function handleTaskDrop(taskId: string, dateStr: string) {
@@ -129,7 +120,7 @@ export default function MonthView({
     await fetchMonth(next);
   }
 
-  const cells = getMonthCells(monthStart);
+  const cells = monthGridCells(monthStart, weekStartsOn);
   const currentMonth = monthStart.getUTCMonth();
   const todayStr = getLocalTodayStr();
 
@@ -143,14 +134,14 @@ export default function MonthView({
     >
       {/* Month header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           {MONTH_NAMES[monthStart.getUTCMonth()]} {monthStart.getUTCFullYear()}
         </h2>
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(-1)}
             disabled={fetching}
-            className="rounded-lg border border-gray-200 p-1.5 text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
+            className="rounded-lg border border-gray-200 dark:border-gray-700 p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 transition"
             aria-label={t("month_prev")}
           >
             <ChevronLeft size={16} />
@@ -158,7 +149,7 @@ export default function MonthView({
           <button
             onClick={() => navigate(1)}
             disabled={fetching}
-            className="rounded-lg border border-gray-200 p-1.5 text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
+            className="rounded-lg border border-gray-200 dark:border-gray-700 p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 transition"
             aria-label={t("month_next")}
           >
             <ChevronRight size={16} />
@@ -167,12 +158,12 @@ export default function MonthView({
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 gap-px rounded-xl overflow-hidden border border-gray-200 bg-gray-200">
+      <div className="grid grid-cols-7 gap-px rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-700">
         {/* Day labels */}
         {DAY_LABELS.map((d, i) => (
           <div
             key={d}
-            className="bg-gray-50 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-400"
+            className="bg-gray-50 dark:bg-gray-950 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500"
           >
             <span className="sm:hidden">{DAY_LABELS_SHORT[i]}</span>
             <span className="hidden sm:inline">{d}</span>
@@ -212,8 +203,8 @@ export default function MonthView({
                 dragOverDate === dateStr
                   ? "bg-primary-light"
                   : isCurrentMonth
-                    ? "bg-white"
-                    : "bg-gray-50"
+                    ? "bg-white dark:bg-gray-900"
+                    : "bg-gray-50 dark:bg-gray-950"
               }`}
             >
               {/* Day number */}
@@ -222,8 +213,8 @@ export default function MonthView({
                   isToday
                     ? "bg-primary text-white"
                     : isCurrentMonth
-                      ? "text-gray-700"
-                      : "text-gray-300"
+                      ? "text-gray-700 dark:text-gray-300"
+                      : "text-gray-300 dark:text-gray-600"
                 }`}
               >
                 {date.getUTCDate()}
@@ -244,7 +235,7 @@ export default function MonthView({
                       e.dataTransfer.setData("text/plain", task.id);
                       e.dataTransfer.effectAllowed = "move";
                     }}
-                    className={`group/task flex cursor-pointer items-start gap-1 rounded px-1 py-0.5 hover:bg-gray-100 transition ${
+                    className={`group/task flex cursor-pointer items-start gap-1 rounded px-1 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition ${
                       task.done ? "opacity-40" : ""
                     }`}
                   >
@@ -253,22 +244,22 @@ export default function MonthView({
                         className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
                           SWATCH_CLASSES[
                             task.category.color as CategoryColor
-                          ] ?? "bg-gray-300"
+                          ] ?? "bg-gray-300 dark:bg-gray-600"
                         }`}
                       />
                     ) : (
-                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full border border-gray-300" />
+                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full border border-gray-300 dark:border-gray-600" />
                     )}
                     <div className="min-w-0 flex-1">
                       <p
                         className={`truncate text-xs ${
-                          isCurrentMonth ? "text-gray-700" : "text-gray-400"
+                          isCurrentMonth ? "text-gray-700 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"
                         } ${task.done ? "line-through" : ""}`}
                       >
                         {task.title}
                       </p>
                       {task.notes && (
-                        <p className="truncate text-[10px] text-gray-400">
+                        <p className="truncate text-[10px] text-gray-400 dark:text-gray-500">
                           {stripMarkdown(task.notes)}
                         </p>
                       )}
@@ -280,7 +271,7 @@ export default function MonthView({
                           setEditTask(task);
                         }}
                         aria-label={t("task_edit")}
-                        className="text-gray-300 hover:text-gray-500 transition"
+                        className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition"
                       >
                         <Pencil size={13} />
                       </button>
@@ -290,7 +281,7 @@ export default function MonthView({
                           handleDelete(task.id);
                         }}
                         aria-label={t("task_delete")}
-                        className="text-gray-300 hover:text-red-400 transition"
+                        className="text-gray-300 dark:text-gray-600 hover:text-red-400 transition"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -298,7 +289,7 @@ export default function MonthView({
                   </div>
                 ))}
                 {overflow > 0 && (
-                  <span className="px-1 text-xs text-gray-400">
+                  <span className="px-1 text-xs text-gray-400 dark:text-gray-500">
                     +{overflow} more
                   </span>
                 )}
@@ -310,7 +301,7 @@ export default function MonthView({
                   e.stopPropagation();
                   setAddDate(date);
                 }}
-                className="mt-auto w-full rounded py-0.5 pl-1 text-left text-xs text-gray-300 opacity-0 hover:text-gray-500 transition group-hover:opacity-100"
+                className="mt-auto w-full rounded py-0.5 pl-1 text-left text-xs text-gray-300 dark:text-gray-600 opacity-0 hover:text-gray-500 dark:hover:text-gray-400 transition group-hover:opacity-100"
               >
                 {t("month_add_task")}
               </button>

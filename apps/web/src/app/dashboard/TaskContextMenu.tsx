@@ -65,7 +65,7 @@ export default function TaskContextMenu({
     <div
       ref={ref}
       style={{ left, top }}
-      className="fixed z-50 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+      className="fixed z-50 min-w-[200px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-1 shadow-lg"
     >
       {!rescheduling ? (
         <>
@@ -75,9 +75,9 @@ export default function TaskContextMenu({
               onDuplicate();
               onClose();
             }}
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
-            <Copy size={13} className="shrink-0 text-gray-400" />
+            <Copy size={13} className="shrink-0 text-gray-400 dark:text-gray-500" />
             {t("task_duplicate")}
           </button>
           <button
@@ -85,12 +85,12 @@ export default function TaskContextMenu({
               e.stopPropagation();
               setRescheduling(true);
             }}
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
-            <CalendarClock size={13} className="shrink-0 text-gray-400" />
+            <CalendarClock size={13} className="shrink-0 text-gray-400 dark:text-gray-500" />
             {t("task_reschedule")}
           </button>
-          <div className="mx-2 border-t border-gray-100" />
+          <div className="mx-2 border-t border-gray-100 dark:border-gray-800" />
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -111,7 +111,7 @@ export default function TaskContextMenu({
               setRescheduling(false);
             }}
             aria-label={t("task_reschedule_back")}
-            className="mb-1.5 flex items-center gap-1.5 rounded px-1 py-1 text-xs text-gray-400 hover:text-gray-700 transition"
+            className="mb-1.5 flex items-center gap-1.5 rounded px-1 py-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition"
           >
             <ArrowLeft size={12} />
             {t("task_reschedule")}
@@ -122,7 +122,7 @@ export default function TaskContextMenu({
                 e.stopPropagation();
                 pick(today);
               }}
-              className="rounded-md px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition"
+              className="rounded-md px-2 py-1.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
             >
               {t("task_reschedule_today")}
             </button>
@@ -131,7 +131,7 @@ export default function TaskContextMenu({
                 e.stopPropagation();
                 pick(addDays(today, 1));
               }}
-              className="rounded-md px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition"
+              className="rounded-md px-2 py-1.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
             >
               {t("task_reschedule_tomorrow")}
             </button>
@@ -140,7 +140,7 @@ export default function TaskContextMenu({
                 e.stopPropagation();
                 pick(addDays(today, 7));
               }}
-              className="rounded-md px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition"
+              className="rounded-md px-2 py-1.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
             >
               {t("task_reschedule_next_week")}
             </button>
@@ -150,7 +150,7 @@ export default function TaskContextMenu({
               onChange={(e) => {
                 if (e.target.value) pick(e.target.value);
               }}
-              className="mt-1 rounded-md border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
+              className="mt-1 rounded-md border border-gray-200 dark:border-gray-700 px-2 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary-light"
             />
           </div>
         </div>

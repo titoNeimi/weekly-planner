@@ -45,8 +45,8 @@ export default function TeamTaskItem({ task }: { task: SerializedTeamTask }) {
         task.isEvent
           ? "border-amber-200 bg-amber-50 hover:border-amber-300 hover:shadow-sm"
           : done
-            ? "border-gray-100 bg-gray-50"
-            : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
+            ? "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
+            : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-200 hover:shadow-sm"
       }`}
     >
       <div className="flex items-start gap-2">
@@ -63,15 +63,15 @@ export default function TeamTaskItem({ task }: { task: SerializedTeamTask }) {
             aria-label={done ? t("task_mark_incomplete") : t("task_mark_complete")}
             className={`mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border transition disabled:opacity-50 ${
               done
-                ? "border-gray-300 bg-gray-300"
-                : "border-gray-300 bg-white hover:border-gray-500"
+                ? "border-gray-300 dark:border-gray-600 bg-gray-300 dark:bg-gray-600"
+                : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 hover:border-gray-500"
             }`}
           />
         )}
         <div className="min-w-0 flex-1">
           <p
             className={`wrap-break-word text-sm font-medium leading-snug ${
-              done && !task.isEvent ? "text-gray-300 line-through" : "text-gray-800"
+              done && !task.isEvent ? "text-gray-300 dark:text-gray-600 line-through" : "text-gray-800 dark:text-gray-200"
             }`}
           >
             {task.title}
@@ -79,7 +79,7 @@ export default function TeamTaskItem({ task }: { task: SerializedTeamTask }) {
           {task.notes && (
             <p
               className={`mt-1 line-clamp-2 wrap-break-word text-xs leading-relaxed ${
-                done && !task.isEvent ? "text-gray-300" : "text-gray-400"
+                done && !task.isEvent ? "text-gray-300 dark:text-gray-600" : "text-gray-400 dark:text-gray-500"
               }`}
             >
               {stripMarkdown(task.notes)}
@@ -96,16 +96,16 @@ export default function TeamTaskItem({ task }: { task: SerializedTeamTask }) {
           <div className="mt-1.5 flex items-center gap-1">
             <Users
               size={10}
-              className={task.isEvent ? "text-amber-400" : done ? "text-gray-300" : "text-blue-400"}
+              className={task.isEvent ? "text-amber-400" : done ? "text-gray-300 dark:text-gray-600" : "text-blue-400"}
             />
             <span
-              className={`text-[10px] font-medium ${task.isEvent ? "text-amber-600" : done ? "text-gray-300" : "text-blue-500"}`}
+              className={`text-[10px] font-medium ${task.isEvent ? "text-amber-600" : done ? "text-gray-300 dark:text-gray-600" : "text-blue-500"}`}
             >
               {task.teamName}
             </span>
             {task.assignedToName && (
               <span
-                className={`text-[10px] ${done && !task.isEvent ? "text-gray-300" : "text-gray-400"}`}
+                className={`text-[10px] ${done && !task.isEvent ? "text-gray-300 dark:text-gray-600" : "text-gray-400 dark:text-gray-500"}`}
               >
                 · {task.assignedToName}
               </span>

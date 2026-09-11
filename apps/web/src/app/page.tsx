@@ -27,7 +27,7 @@ export default function Home() {
   const { t } = useLanguage();
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center bg-[oklch(0.978_0.000_0)] px-6 py-16">
+    <main className="flex flex-1 flex-col items-center justify-center bg-[oklch(0.978_0.000_0)] dark:bg-gray-950 px-6 py-16">
       <div className="flex flex-col items-center gap-10 text-center">
 
         <div className="animate-fade-in" style={{ animationDelay: "0ms" }}>
@@ -36,13 +36,13 @@ export default function Home() {
 
         <div className="flex flex-col items-center gap-3">
           <h1
-            className="animate-fade-in text-balance text-4xl font-semibold tracking-tight text-gray-900"
+            className="animate-fade-in text-balance text-4xl font-semibold tracking-tight text-gray-900 dark:text-gray-100"
             style={{ animationDelay: "150ms" }}
           >
             {t("landing_headline")}
           </h1>
           <p
-            className="animate-fade-in max-w-sm text-pretty text-gray-500"
+            className="animate-fade-in max-w-sm text-pretty text-gray-500 dark:text-gray-400"
             style={{ animationDelay: "230ms" }}
           >
             {t("landing_subtitle")}

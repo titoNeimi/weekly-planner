@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Pin, PinOff } from "lucide-react";
 import type { SerializedCategory } from "@/app/dashboard/WeekView";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
@@ -12,6 +13,7 @@ type Props = {
   onClose: () => void;
   onRenamed: (id: string, newName: string) => void;
   onDeleted: (id: string) => void;
+  onPinToggled?: (id: string, pinned: boolean) => void;
 };
 
 export default function CategoryContextMenu({
@@ -21,6 +23,7 @@ export default function CategoryContextMenu({
   onClose,
   onRenamed,
   onDeleted,
+  onPinToggled,
 }: Props) {
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(category.name);
@@ -74,11 +77,23 @@ export default function CategoryContextMenu({
     onClose();
   }
 
+  async function handleTogglePin() {
+    const pinned = !category.pinned;
+    onPinToggled?.(category.id, pinned);
+    onClose();
+    await fetch(`/api/category/${category.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pinned }),
+    });
+    toast.success(pinned ? t("cat_pinned") : t("cat_unpinned"));
+  }
+
   return (
     <div
       ref={menuRef}
       style={{ top: y, left: x }}
-      className="fixed z-50 min-w-[160px] rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
+      className="fixed z-50 min-w-[160px] rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 py-1 shadow-lg"
     >
       {renaming ? (
         <div className="flex items-center gap-1 px-2 py-1">
@@ -90,21 +105,34 @@ export default function CategoryContextMenu({
               if (e.key === "Enter") handleRename();
               if (e.key === "Escape") onClose();
             }}
-            className="w-full rounded-md border border-gray-200 px-2 py-1 text-sm outline-none focus:border-gray-400"
+            className="w-full rounded-md border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500"
           />
           <button
             disabled={saving}
             onClick={handleRename}
-            className="shrink-0 rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition"
+            className="shrink-0 rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300 disabled:opacity-50 transition"
           >
             {saving ? "…" : t("ok")}
           </button>
         </div>
       ) : (
         <>
+          {onPinToggled && (
+            <button
+              onClick={handleTogglePin}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            >
+              {category.pinned ? (
+                <PinOff size={13} className="shrink-0" />
+              ) : (
+                <Pin size={13} className="shrink-0" />
+              )}
+              {category.pinned ? t("cat_unpin") : t("cat_pin")}
+            </button>
+          )}
           <button
             onClick={() => setRenaming(true)}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
             {t("cat_rename")}
           </button>

@@ -107,9 +107,9 @@ export default function DayTimeline({
   }
 
   return (
-    <div className="flex flex-col rounded-xl border border-gray-200 bg-white">
-      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2 sm:px-4">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+    <div className="flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-3 py-2 sm:px-4">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
           {t("timeline_title")}
         </span>
         <button
@@ -132,11 +132,11 @@ export default function DayTimeline({
             setDragOverHour((h) => (h === "allday" ? null : h))
           }
           onDrop={(e) => handleDrop(e, "00:00")}
-          className={`flex gap-3 border-b border-gray-100 px-3 py-2.5 transition sm:px-4 ${
+          className={`flex gap-3 border-b border-gray-100 dark:border-gray-800 px-3 py-2.5 transition sm:px-4 ${
             dragOverHour === "allday" ? "bg-primary-light" : ""
           }`}
         >
-          <span className="w-12 shrink-0 pt-1 text-[10px] font-medium uppercase text-gray-400">
+          <span className="w-12 shrink-0 pt-1 text-[10px] font-medium uppercase text-gray-400 dark:text-gray-500">
             {t("timeline_all_day")}
           </span>
           <div className="flex flex-1 flex-col gap-2">
@@ -169,11 +169,11 @@ export default function DayTimeline({
                 setDragOverHour((h) => (h === hour ? null : h))
               }
               onDrop={(e) => handleDrop(e, hourLabel(hour))}
-              className={`group flex gap-3 border-b border-gray-50 px-3 py-2 transition last:border-0 sm:px-4 ${
+              className={`group flex gap-3 border-b border-gray-50 dark:border-gray-900 px-3 py-2 transition last:border-0 sm:px-4 ${
                 dragOverHour === hour ? "bg-primary-light" : ""
               }`}
             >
-              <span className="w-12 shrink-0 pt-0.5 text-[10px] tabular-nums text-gray-300">
+              <span className="w-12 shrink-0 pt-0.5 text-[10px] tabular-nums text-gray-300 dark:text-gray-600">
                 {hourLabel(hour)}
               </span>
               <div className="flex min-h-[1.75rem] flex-1 flex-col gap-2 py-0.5">
@@ -188,7 +188,7 @@ export default function DayTimeline({
                     onClick={() =>
                       setAddAt({ date, time: hourLabel(hour) })
                     }
-                    className="hidden h-5 w-full rounded text-left text-[11px] text-gray-300 hover:text-gray-500 group-hover:block"
+                    className="hidden h-5 w-full rounded text-left text-[11px] text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 group-hover:block"
                   >
                     {t("day_add_task")}
                   </button>

@@ -38,7 +38,7 @@ type TeamData = {
 const ROLE_COLORS: Record<string, string> = {
   OWNER: "bg-purple-100 text-purple-700",
   ADMIN: "bg-blue-100 text-blue-700",
-  USER: "bg-gray-100 text-gray-600",
+  USER: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400",
 };
 
 function isExpired(inv: InviteRow): boolean {
@@ -253,7 +253,7 @@ export default function TeamDetail({
       {/* Back */}
       <Link
         href="/teams"
-        className="flex w-fit items-center gap-1 text-sm text-gray-500 transition hover:text-gray-800"
+        className="flex w-fit items-center gap-1 text-sm text-gray-500 dark:text-gray-400 transition hover:text-gray-800 dark:hover:text-gray-100"
       >
         <ChevronLeft className="h-4 w-4" />
         {t("nav_teams")}
@@ -261,25 +261,25 @@ export default function TeamDetail({
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold text-gray-900">{team.name}</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{team.name}</h1>
         {canManage && (
-          <div className="flex overflow-hidden rounded-lg border border-gray-200 text-sm font-medium">
+          <div className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium">
             <button
               onClick={() => setTab("tasks")}
               className={`px-4 py-1.5 transition-colors ${
                 tab === "tasks"
                   ? "bg-primary text-white"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100"
               }`}
             >
               {t("team_tab_tasks")}
             </button>
             <button
               onClick={() => setTab("settings")}
-              className={`border-l border-gray-200 px-4 py-1.5 transition-colors ${
+              className={`border-l border-gray-200 dark:border-gray-700 px-4 py-1.5 transition-colors ${
                 tab === "settings"
                   ? "bg-primary text-white"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100"
               }`}
             >
               {t("team_tab_settings")}
@@ -306,8 +306,8 @@ export default function TeamDetail({
 
           {/* Member sidebar */}
           <div className="hidden w-52 shrink-0 sm:block">
-            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-              <p className="mb-3 text-sm font-medium text-gray-500">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-sm">
+              <p className="mb-3 text-sm font-medium text-gray-500 dark:text-gray-400">
                 {tpl("team_members_header", { n: team.members.length })}
               </p>
               <ul className="flex flex-col gap-2.5">
@@ -318,7 +318,7 @@ export default function TeamDetail({
                       avatarUrl={m.profile.avatarUrl ?? undefined}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-gray-800">
+                      <p className="truncate text-sm text-gray-800 dark:text-gray-200">
                         {m.profile.name ?? m.userId}
                       </p>
                     </div>
@@ -342,9 +342,9 @@ export default function TeamDetail({
 
           {/* ── General ── */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold text-gray-900">{t("team_settings_general")}</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("team_settings_general")}</h2>
 
-            <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-4">
               {editingName ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <input
@@ -358,7 +358,7 @@ export default function TeamDetail({
                         setNameInput(team.name);
                       }
                     }}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-gray-400 dark:focus:border-gray-500"
                   />
                   <button
                     onClick={saveName}
@@ -369,7 +369,7 @@ export default function TeamDetail({
                   </button>
                   <button
                     onClick={() => { setEditingName(false); setNameInput(team.name); }}
-                    className="cursor-pointer rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-50"
+                    className="cursor-pointer rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
                     {t("cancel")}
                   </button>
@@ -377,12 +377,12 @@ export default function TeamDetail({
               ) : (
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">{t("team_settings_name")}</p>
-                    <p className="mt-0.5 text-sm text-gray-900">{team.name}</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("team_settings_name")}</p>
+                    <p className="mt-0.5 text-sm text-gray-900 dark:text-gray-100">{team.name}</p>
                   </div>
                   <button
                     onClick={() => setEditingName(true)}
-                    className="cursor-pointer text-gray-400 transition hover:text-gray-700"
+                    className="cursor-pointer text-gray-400 dark:text-gray-500 transition hover:text-gray-700 dark:hover:text-gray-200"
                     aria-label={t("team_settings_rename")}
                   >
                     <Pencil className="h-4 w-4" />
@@ -394,16 +394,16 @@ export default function TeamDetail({
 
           {/* ── People ── */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold text-gray-900">{t("team_settings_people")}</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("team_settings_people")}</h2>
 
             {/* Members */}
-            <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
-              <div className="flex items-center justify-between border-b border-gray-50 px-5 py-3">
-                <p className="text-sm font-medium text-gray-700">
+            <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <div className="flex items-center justify-between border-b border-gray-50 dark:border-gray-900 px-5 py-3">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {tpl("team_members_header", { n: team.members.length })}
                 </p>
               </div>
-              <ul className="divide-y divide-gray-50">
+              <ul className="divide-y divide-gray-50 dark:divide-gray-800">
                 {team.members.map((m) => (
                   <li
                     key={m.id}
@@ -414,7 +414,7 @@ export default function TeamDetail({
                         name={m.profile.name ?? undefined}
                         avatarUrl={m.profile.avatarUrl ?? undefined}
                       />
-                      <span className="truncate text-sm text-gray-900">
+                      <span className="truncate text-sm text-gray-900 dark:text-gray-100">
                         {m.profile.name ?? m.userId}
                       </span>
                     </div>
@@ -424,7 +424,7 @@ export default function TeamDetail({
                           value={m.role}
                           disabled={changingRoleId === m.id}
                           onChange={(e) => changeRole(m.id, e.target.value)}
-                          className="cursor-pointer rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700 disabled:opacity-50"
+                          className="cursor-pointer rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50"
                         >
                           <option value="ADMIN">{t("team_settings_role_admin")}</option>
                           <option value="USER">{t("team_settings_role_member")}</option>
@@ -441,7 +441,7 @@ export default function TeamDetail({
                           onClick={() => removeMember(m.id)}
                           disabled={removingId === m.id}
                           title={m.id === myMemberId ? "Leave team" : "Remove member"}
-                          className="cursor-pointer text-gray-300 transition hover:text-red-500 disabled:opacity-40"
+                          className="cursor-pointer text-gray-300 dark:text-gray-600 transition hover:text-red-500 disabled:opacity-40"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -453,12 +453,12 @@ export default function TeamDetail({
             </div>
 
             {/* Invite links */}
-            <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
-              <div className="flex items-center justify-between border-b border-gray-50 px-5 py-3">
-                <p className="text-sm font-medium text-gray-700">{t("team_settings_invite_links")}</p>
+            <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <div className="flex items-center justify-between border-b border-gray-50 dark:border-gray-900 px-5 py-3">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("team_settings_invite_links")}</p>
                 <button
                   onClick={() => setShowCreateInvite((v) => !v)}
-                  className="flex cursor-pointer items-center gap-1 text-sm text-gray-500 transition hover:text-gray-900"
+                  className="flex cursor-pointer items-center gap-1 text-sm text-gray-500 dark:text-gray-400 transition hover:text-gray-900 dark:hover:text-gray-100"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {t("team_settings_new_link")}
@@ -468,10 +468,10 @@ export default function TeamDetail({
               {showCreateInvite && (
                 <form
                   onSubmit={createInvite}
-                  className="flex flex-wrap items-end gap-4 border-b border-gray-100 bg-gray-50 px-5 py-4"
+                  className="flex flex-wrap items-end gap-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 px-5 py-4"
                 >
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
                       {t("team_settings_max_uses")}
                     </label>
                     <input
@@ -479,25 +479,25 @@ export default function TeamDetail({
                       min="1"
                       value={inviteMaxUses}
                       onChange={(e) => setInviteMaxUses(e.target.value)}
-                      className="w-24 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400"
+                      className="w-24 rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
                       {t("team_settings_expires")}
                     </label>
                     <input
                       type="date"
                       value={inviteEndDate}
                       onChange={(e) => setInviteEndDate(e.target.value)}
-                      className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400"
+                      className="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500"
                     />
                   </div>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => setShowCreateInvite(false)}
-                      className="cursor-pointer rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-white"
+                      className="cursor-pointer rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 transition hover:bg-white"
                     >
                       {t("cancel")}
                     </button>
@@ -513,11 +513,11 @@ export default function TeamDetail({
               )}
 
               {team.invitations.length === 0 && !showCreateInvite ? (
-                <p className="px-5 py-6 text-center text-sm text-gray-400">
+                <p className="px-5 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
                   {t("team_settings_no_links")}
                 </p>
               ) : (
-                <ul className="divide-y divide-gray-50">
+                <ul className="divide-y divide-gray-50 dark:divide-gray-800">
                   {team.invitations.map((inv) => {
                     const expired = isExpired(inv);
                     return (
@@ -526,10 +526,10 @@ export default function TeamDetail({
                         className="flex items-center justify-between gap-4 px-5 py-3"
                       >
                         <div className="flex min-w-0 items-center gap-2">
-                          <Link2 className="h-4 w-4 shrink-0 text-gray-300" />
+                          <Link2 className="h-4 w-4 shrink-0 text-gray-300 dark:text-gray-600" />
                           <span
                             className={`truncate font-mono text-xs ${
-                              expired ? "text-gray-300 line-through" : "text-gray-600"
+                              expired ? "text-gray-300 dark:text-gray-600 line-through" : "text-gray-600 dark:text-gray-400"
                             }`}
                           >
                             /invite/{inv.code}
@@ -541,23 +541,23 @@ export default function TeamDetail({
                           )}
                         </div>
                         <div className="flex shrink-0 items-center gap-4">
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
                             {inv.uses}/{inv.maxUses} uses
                           </span>
-                          <span className="hidden text-xs text-gray-400 sm:block">
+                          <span className="hidden text-xs text-gray-400 dark:text-gray-500 sm:block">
                             {formatDate(inv.endDate)}
                           </span>
                           <button
                             onClick={() => copyInviteLink(inv.code)}
                             title={t("team_settings_copy")}
-                            className="cursor-pointer text-gray-400 transition hover:text-gray-700"
+                            className="cursor-pointer text-gray-400 dark:text-gray-500 transition hover:text-gray-700 dark:hover:text-gray-200"
                           >
                             <Copy className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => revokeInvite(inv.id)}
                             title={t("team_settings_revoke")}
-                            className="cursor-pointer text-gray-300 transition hover:text-red-500"
+                            className="cursor-pointer text-gray-300 dark:text-gray-600 transition hover:text-red-500"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -572,20 +572,20 @@ export default function TeamDetail({
 
           {/* ── Integrations ── */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold text-gray-900">{t("team_settings_integrations")}</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("team_settings_integrations")}</h2>
 
             {/* Discord row */}
-            <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-4">
               <div className="flex items-center justify-between gap-6">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-700">{t("team_settings_discord")}</p>
-                  <p className="mt-0.5 text-sm text-gray-500">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("team_settings_discord")}</p>
+                  <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                     {discordGuildId
                       ? t("team_settings_discord_connected")
                       : t("team_settings_discord_add")}
                   </p>
                   {discordGuildId && (
-                    <p className="mt-0.5 truncate font-mono text-xs text-gray-400">
+                    <p className="mt-0.5 truncate font-mono text-xs text-gray-400 dark:text-gray-500">
                       {tpl("team_settings_discord_guild", { id: discordGuildId })}
                     </p>
                   )}
@@ -599,7 +599,7 @@ export default function TeamDetail({
                       <button
                         onClick={disconnectDiscord}
                         disabled={disconnecting}
-                        className="cursor-pointer rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
+                        className="cursor-pointer rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
                       >
                         {disconnecting ? t("team_settings_disconnecting") : t("team_settings_disconnect")}
                       </button>
@@ -637,7 +637,7 @@ export default function TeamDetail({
                   <p className="text-sm font-semibold text-red-600">
                     {t("team_settings_danger")}
                   </p>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     {t("team_settings_danger_subtitle")}
                   </p>
                 </div>

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(6px); }
@@ -18,4 +19,14 @@
   --color-primary-hover: oklch(0.380 0.110 150);
   --color-primary-light: oklch(0.940 0.040 150);
   --animate-fade-in: fade-in 0.2s ease-out both;
+}
+
+.dark {
+  --color-primary: oklch(0.640 0.130 150);
+  --color-primary-hover: oklch(0.720 0.130 150);
+  --color-primary-light: oklch(0.300 0.045 150);
+}
+
+.dark {
+  color-scheme: dark;
 }

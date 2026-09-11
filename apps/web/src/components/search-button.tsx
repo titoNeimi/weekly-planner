@@ -19,10 +19,10 @@ export default function SearchButton() {
       onClick={() => setOpen(true)}
       aria-label={t("search_open")}
       title={t("search_open")}
-      className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+      className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-gray-400 dark:text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200"
     >
       <Search size={15} />
-      <span className="hidden text-xs text-gray-300 sm:inline">
+      <span className="hidden text-xs text-gray-300 dark:text-gray-600 sm:inline">
         {isMac ? "⌘K" : "Ctrl K"}
       </span>
     </button>

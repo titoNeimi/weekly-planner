@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import TaskOverview from "./TaskOverview";
 import { getNextRecurringInstances } from "@/lib/get-tasks-for-range";
+import type { WeekStartsOn } from "@/lib/week";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -14,8 +15,12 @@ export default async function DashboardPage() {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
 
-  const [allTasks, categories, recurringInstances, rawTeamTasks] =
+  const [profile, allTasks, categories, recurringInstances, rawTeamTasks] =
     await Promise.all([
+      prisma.profile.findUnique({
+        where: { userId: user.id },
+        select: { weekStartsOn: true },
+      }),
       prisma.task.findMany({
         where: {
           userId: user.id,
@@ -30,7 +35,11 @@ export default async function DashboardPage() {
         },
         orderBy: { date: "asc" },
       }),
-      prisma.category.findMany({ where: { userId: user.id } }),
+      prisma.category.findMany({
+        where: { userId: user.id },
+        select: { id: true, name: true, color: true, pinned: true },
+        orderBy: [{ pinned: "desc" }, { createdAt: "asc" }],
+      }),
       getNextRecurringInstances(user.id, today),
       prisma.teamTask.findMany({
         where: {
@@ -84,7 +93,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <main className="flex-1 bg-gray-50 px-4 py-6 sm:px-6 sm:py-8">
+    <main className="flex-1 bg-gray-50 dark:bg-gray-950 px-4 py-6 sm:px-6 sm:py-8">
       <TaskOverview
         tasks={serializedTasks}
         teamTasks={rawTeamTasks.map((t) => ({
@@ -103,6 +112,7 @@ export default async function DashboardPage() {
           updatedAt: t.updatedAt.toISOString(),
         }))}
         categories={categories}
+        weekStartsOn={(profile?.weekStartsOn === 0 ? 0 : 1) as WeekStartsOn}
       />
     </main>
   );

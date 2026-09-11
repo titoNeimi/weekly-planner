@@ -16,6 +16,8 @@ import RecurringActionDialog from "./RecurringActionDialog";
 import TaskContextMenu from "./TaskContextMenu";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
+import { useDensity } from "@/context/DensityContext";
+import { undoableAction } from "@/lib/undo-toast";
 
 export default function TaskItem({
   task,
@@ -52,6 +54,8 @@ export default function TaskItem({
   >(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const { t, tpl } = useLanguage();
+  const { density } = useDensity();
+  const compact = density === "compact";
 
   const isVirtual = task.id.startsWith(VIRTUAL_ID_PREFIX);
 
@@ -107,17 +111,25 @@ export default function TaskItem({
     triggerDelete();
   }
 
-  async function handleDeleteConfirmed() {
+  function handleDeleteConfirmed() {
     onDeleted(task.id);
-    await fetch(`/api/task/${task.id}`, { method: "DELETE" });
-    toast.success(t("task_deleted"));
+    undoableAction({
+      message: t("task_deleted"),
+      undoLabel: t("toast_undo"),
+      commit: () => fetch(`/api/task/${task.id}`, { method: "DELETE" }),
+      rollback: () => onCreated(task),
+    });
   }
 
-  async function handleDeleteThisOne() {
+  function handleDeleteThisOne() {
     setRecurringDialog(null);
     onDeleted(task.id);
-    await fetch(`/api/task/${task.id}`, { method: "DELETE" });
-    toast.success(t("task_occurrence_deleted"));
+    undoableAction({
+      message: t("task_occurrence_deleted"),
+      undoLabel: t("toast_undo"),
+      commit: () => fetch(`/api/task/${task.id}`, { method: "DELETE" }),
+      rollback: () => onCreated(task),
+    });
   }
 
   async function handleDeleteAll() {
@@ -181,7 +193,7 @@ export default function TaskItem({
 
   const categoryBadgeClass = task.category
     ? (COLOR_CLASSES[task.category.color as CategoryColor] ??
-      "bg-gray-100 text-gray-500")
+      "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400")
     : null;
 
   return (
@@ -198,14 +210,14 @@ export default function TaskItem({
         e.dataTransfer.setData("text/plain", task.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className={`group cursor-pointer rounded-lg border px-3 py-2.5 transition ${
-        task.date ? "active:cursor-grabbing" : ""
-      } ${
+      className={`group cursor-pointer rounded-lg border transition ${
+        compact ? "px-2.5 py-1.5" : "px-3 py-2.5"
+      } ${task.date ? "active:cursor-grabbing" : ""} ${
         task.isEvent
           ? "border-amber-200 bg-amber-50 hover:border-amber-300 hover:shadow-sm"
           : task.done
-            ? "border-gray-100 bg-gray-50"
-            : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
+            ? "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
+            : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-200 hover:shadow-sm"
       }`}
     >
       <div className="flex items-start gap-2">
@@ -225,7 +237,7 @@ export default function TaskItem({
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
               task.done
                 ? "border-primary bg-primary"
-                : "border-gray-200 bg-white hover:border-primary"
+                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-primary"
             }`}
           >
             {task.done && (
@@ -238,21 +250,21 @@ export default function TaskItem({
         <div className="min-w-0 flex-1">
           <p
             className={`text-sm font-medium leading-snug wrap-break-word ${
-              task.done && !task.isEvent ? "line-through text-gray-300" : "text-gray-800"
+              task.done && !task.isEvent ? "line-through text-gray-300 dark:text-gray-600" : "text-gray-800 dark:text-gray-200"
             }`}
           >
             {task.title}
           </p>
-          {task.notes && (
+          {task.notes && !compact && (
             <p
               className={`mt-1 line-clamp-2 text-xs leading-relaxed ${
-                task.done && !task.isEvent ? "text-gray-300" : "text-gray-400"
+                task.done && !task.isEvent ? "text-gray-300 dark:text-gray-600" : "text-gray-400 dark:text-gray-500"
               }`}
             >
               {stripMarkdown(task.notes)}
             </p>
           )}
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-1" : "mt-1.5"}`}>
             {overdueDays > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                 <Clock size={8} />
@@ -273,7 +285,7 @@ export default function TaskItem({
               </span>
             )}
             {task.recurringTaskId && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-400">
                 <RefreshCcw size={8} />
                 {t("task_recurring")}
               </span>
@@ -287,14 +299,14 @@ export default function TaskItem({
               handleEditClick();
             }}
             aria-label={t("task_edit")}
-            className="text-gray-300 hover:text-gray-500 transition"
+            className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition"
           >
             <Pencil size={13} />
           </button>
           <button
             onClick={handleDeleteClick}
             aria-label={t("task_delete")}
-            className="text-gray-300 hover:text-red-400 transition"
+            className="text-gray-300 dark:text-gray-600 hover:text-red-400 transition"
           >
             <Trash2 size={13} />
           </button>

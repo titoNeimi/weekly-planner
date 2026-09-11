@@ -39,7 +39,7 @@ export default async function TeamDetailPage({
     : [];
 
   return (
-    <main className="flex-1 bg-gray-50 px-3 py-4 sm:px-6 sm:py-8">
+    <main className="flex-1 bg-gray-50 dark:bg-gray-950 px-3 py-4 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-5xl">
         <TeamDetail
           team={{

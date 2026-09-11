@@ -6,6 +6,7 @@ import { Search, CalendarDays, Users } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { useSearch } from "@/context/SearchContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { isTypingTarget, hasModifier } from "@/lib/keyboard";
 
 type TaskResult = {
   id: string;
@@ -33,7 +34,7 @@ type Result =
 export default function CommandPalette() {
   const { user } = useUser();
   const { open, setOpen } = useSearch();
-  const { t, ta } = useLanguage();
+  const { t, ta, tpl } = useLanguage();
   const router = useRouter();
 
   const [query, setQuery] = useState("");
@@ -42,11 +43,14 @@ export default function CommandPalette() {
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Global Cmd/Ctrl+K to open, regardless of what page we're on.
+  // Global Cmd/Ctrl+K (or "/" when not typing) to open, regardless of what page we're on.
   useEffect(() => {
     if (!user) return;
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen(true);
+      } else if (e.key === "/" && !hasModifier(e) && !isTypingTarget(e.target)) {
         e.preventDefault();
         setOpen(true);
       }
@@ -139,30 +143,30 @@ export default function CommandPalette() {
         if (e.target === e.currentTarget) setOpen(false);
       }}
     >
-      <div className="mx-4 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center gap-2.5 border-b border-gray-100 px-4 py-3">
-          <Search size={16} className="shrink-0 text-gray-400" />
+      <div className="mx-4 w-full max-w-lg overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-xl">
+        <div className="flex items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+          <Search size={16} className="shrink-0 text-gray-400 dark:text-gray-500" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("search_placeholder")}
-            className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
+            className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 outline-none placeholder:text-gray-400"
           />
         </div>
 
         <div className="max-h-80 overflow-y-auto py-1">
           {query.trim().length < 2 ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-400">
+            <p className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
               {t("search_hint")}
             </p>
           ) : loading ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-400">
+            <p className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
               {t("search_loading")}
             </p>
           ) : results.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-400">
-              {t("search_no_results")}
+            <p className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+              {tpl("search_no_results_for", { q: query.trim() })}
             </p>
           ) : (
             results.map((result, i) => (
@@ -171,22 +175,22 @@ export default function CommandPalette() {
                 onClick={() => go(result)}
                 onMouseEnter={() => setActiveIndex(i)}
                 className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
-                  i === activeIndex ? "bg-gray-50" : ""
+                  i === activeIndex ? "bg-gray-50 dark:bg-gray-950" : ""
                 }`}
               >
                 {result.kind === "team" ? (
                   <Users size={14} className="shrink-0 text-blue-400" />
                 ) : (
-                  <CalendarDays size={14} className="shrink-0 text-gray-300" />
+                  <CalendarDays size={14} className="shrink-0 text-gray-300 dark:text-gray-600" />
                 )}
                 <span
                   className={`min-w-0 flex-1 truncate text-sm ${
-                    result.item.done ? "text-gray-300 line-through" : "text-gray-800"
+                    result.item.done ? "text-gray-300 dark:text-gray-600 line-through" : "text-gray-800 dark:text-gray-200"
                   }`}
                 >
                   {result.item.title}
                 </span>
-                <span className="shrink-0 text-xs text-gray-400">
+                <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
                   {result.kind === "team" ? result.item.teamName : formatDate(result.item.date)}
                 </span>
               </button>
