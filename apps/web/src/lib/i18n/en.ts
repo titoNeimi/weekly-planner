@@ -20,6 +20,13 @@ const en = {
   // Topbar
   topbar_sign_out: "Sign out",
 
+  // Search
+  search_open: "Search",
+  search_placeholder: "Search tasks and notes…",
+  search_hint: "Type to search your tasks…",
+  search_loading: "Searching…",
+  search_no_results: "No matching tasks",
+
   // Common
   cancel: "Cancel",
   save: "Save",

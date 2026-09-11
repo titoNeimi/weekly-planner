@@ -5,6 +5,7 @@ import Avatar from "@/components/avatar";
 import NavLinks from "@/components/nav-links";
 import SignInLink from "@/components/sign-in-link";
 import LangToggle from "@/components/lang-toggle";
+import SearchButton from "@/components/search-button";
 import SignOutButton from "@/components/sign-out-button";
 
 async function signOut() {
@@ -49,6 +50,7 @@ export default async function Topbar() {
                 {user.user_metadata.full_name ?? user.email}
               </span>
             </div>
+            <SearchButton />
             <LangToggle />
             <SignOutButton action={signOut} />
           </div>

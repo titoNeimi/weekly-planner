@@ -22,6 +22,13 @@ const es: Dict = {
   // Topbar
   topbar_sign_out: "Cerrar sesión",
 
+  // Search
+  search_open: "Buscar",
+  search_placeholder: "Buscar tareas y notas…",
+  search_hint: "Escribe para buscar tus tareas…",
+  search_loading: "Buscando…",
+  search_no_results: "No se encontraron tareas",
+
   // Common
   cancel: "Cancelar",
   save: "Guardar",

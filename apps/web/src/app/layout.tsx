@@ -2,8 +2,10 @@ import { Metadata } from "next";
 import "./globals.css";
 import Topbar from "@/components/topbar";
 import Footer from "@/components/footer";
+import CommandPalette from "@/components/command-palette";
 import { UserProvider } from "@/context/UserContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { SearchProvider } from "@/context/SearchContext";
 import { Toaster } from "sonner";
 export const metadata: Metadata = {
   title: "Weekly Planner",
@@ -23,10 +25,13 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col">
         <LanguageProvider>
           <UserProvider>
-            <Topbar />
-            <div className="flex flex-1 flex-col">{children}</div>
-            <Footer />
-            <Toaster position="bottom-right" richColors />
+            <SearchProvider>
+              <Topbar />
+              <div className="flex flex-1 flex-col">{children}</div>
+              <Footer />
+              <Toaster position="bottom-right" richColors />
+              <CommandPalette />
+            </SearchProvider>
           </UserProvider>
         </LanguageProvider>
       </body>
